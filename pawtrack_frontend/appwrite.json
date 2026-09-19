@@ -1,81 +1,296 @@
 {
-  "projectId": "6aae916e003d2c507761",
-  "projectName": "PawTrack",
-  "databases": [
-    {
-      "$id": "pawtrack_db",
-      "name": "pawtrack_db",
-      "enabled": true
-    }
-  ],
-  "collections": [
-    {
-      "$id": "pets",
-      "databaseId": "pawtrack_db",
-      "name": "pets",
-      "enabled": true,
-      "documentSecurity": true,
-      "attributes": [
-        { "key": "name", "type": "string", "status": "available", "required": true, "array": false, "size": 255 },
-        { "key": "breed", "type": "string", "status": "available", "required": true, "array": false, "size": 255 },
-        { "key": "gender", "type": "string", "status": "available", "required": true, "array": false, "size": 50 },
-        { "key": "age", "type": "string", "status": "available", "required": false, "array": false, "size": 50 },
-        { "key": "status", "type": "string", "status": "available", "required": true, "array": false, "size": 50 },
-        { "key": "health_status", "type": "string", "status": "available", "required": false, "array": false, "size": 255 },
-        { "key": "owner", "type": "string", "status": "available", "required": true, "array": false, "size": 255 },
-        { "key": "contact_number", "type": "string", "status": "available", "required": false, "array": false, "size": 100 },
-        { "key": "personal_traits", "type": "string", "status": "available", "required": false, "array": false, "size": 1000 },
-        { "key": "reason_for_adoption", "type": "string", "status": "available", "required": false, "array": false, "size": 1000 },
-        { "key": "img", "type": "string", "status": "available", "required": false, "array": false, "size": 1000 }
-      ],
-      "indexes": []
-    },
-    {
-      "$id": "applications",
-      "databaseId": "pawtrack_db",
-      "name": "applications",
-      "enabled": true,
-      "documentSecurity": true,
-      "attributes": [
-        { "key": "pet_name", "type": "string", "status": "available", "required": true, "array": false, "size": 255 },
-        { "key": "date", "type": "string", "status": "available", "required": true, "array": false, "size": 100 },
-        { "key": "status", "type": "string", "status": "available", "required": true, "array": false, "size": 50 },
-        { "key": "user_id", "type": "string", "status": "available", "required": true, "array": false, "size": 255 },
-        { "key": "img", "type": "string", "status": "available", "required": false, "array": false, "size": 1000 }
-      ],
-      "indexes": []
-    },
-    {
-      "$id": "vet_appointments",
-      "databaseId": "pawtrack_db",
-      "name": "vet_appointments",
-      "enabled": true,
-      "documentSecurity": true,
-      "attributes": [
-        { "key": "pet_name", "type": "string", "status": "available", "required": true, "array": false, "size": 255 },
-        { "key": "vet_name", "type": "string", "status": "available", "required": true, "array": false, "size": 255 },
-        { "key": "status", "type": "string", "status": "available", "required": true, "array": false, "size": 50 },
-        { "key": "time", "type": "string", "status": "available", "required": false, "array": false, "size": 100 },
-        { "key": "date", "type": "string", "status": "available", "required": false, "array": false, "size": 100 },
-        { "key": "user_id", "type": "string", "status": "available", "required": true, "array": false, "size": 255 },
-        { "key": "img", "type": "string", "status": "available", "required": false, "array": false, "size": 1000 }
-      ],
-      "indexes": []
-    },
-    {
-      "$id": "recycle_bin",
-      "databaseId": "pawtrack_db",
-      "name": "recycle_bin",
-      "enabled": true,
-      "documentSecurity": true,
-      "attributes": [
-        { "key": "name", "type": "string", "status": "available", "required": true, "array": false, "size": 255 },
-        { "key": "breed", "type": "string", "status": "available", "required": true, "array": false, "size": 255 },
-        { "key": "gender", "type": "string", "status": "available", "required": true, "array": false, "size": 50 },
-        { "key": "owner", "type": "string", "status": "available", "required": true, "array": false, "size": 255 },
-        { "key": "img", "type": "string", "status": "available", "required": false, "array": false, "size": 1000 }
-      ],
-      "indexes": []
-    }
-  ]
+    "projectId": "6aae916e003d2c507761",
+    "projectName": "PawTrack",
+    "databases": [
+        {
+            "$id": "pawtrack_db",
+            "name": "pawtrack_db",
+            "enabled": true
+        }
+    ],
+    "collections": [
+        {
+            "$id": "pets",
+            "databaseId": "pawtrack_db",
+            "name": "pets",
+            "enabled": true,
+            "documentSecurity": true,
+            "attributes": [
+                {
+                    "key": "name",
+                    "type": "string",
+                    "status": "available",
+                    "required": true,
+                    "array": false,
+                    "size": 255
+                },
+                {
+                    "key": "breed",
+                    "type": "string",
+                    "status": "available",
+                    "required": true,
+                    "array": false,
+                    "size": 255
+                },
+                {
+                    "key": "gender",
+                    "type": "string",
+                    "status": "available",
+                    "required": true,
+                    "array": false,
+                    "size": 50
+                },
+                {
+                    "key": "age",
+                    "type": "string",
+                    "status": "available",
+                    "required": false,
+                    "array": false,
+                    "size": 50
+                },
+                {
+                    "key": "status",
+                    "type": "string",
+                    "status": "available",
+                    "required": true,
+                    "array": false,
+                    "size": 50
+                },
+                {
+                    "key": "health_status",
+                    "type": "string",
+                    "status": "available",
+                    "required": false,
+                    "array": false,
+                    "size": 255
+                },
+                {
+                    "key": "owner",
+                    "type": "string",
+                    "status": "available",
+                    "required": true,
+                    "array": false,
+                    "size": 255
+                },
+                {
+                    "key": "contact_number",
+                    "type": "string",
+                    "status": "available",
+                    "required": false,
+                    "array": false,
+                    "size": 100
+                },
+                {
+                    "key": "personal_traits",
+                    "type": "string",
+                    "status": "available",
+                    "required": false,
+                    "array": false,
+                    "size": 1000
+                },
+                {
+                    "key": "reason_for_adoption",
+                    "type": "string",
+                    "status": "available",
+                    "required": false,
+                    "array": false,
+                    "size": 1000
+                },
+                {
+                    "key": "img",
+                    "type": "string",
+                    "status": "available",
+                    "required": false,
+                    "array": false,
+                    "size": 1000
+                }
+            ],
+            "indexes": []
+        },
+        {
+            "$id": "applications",
+            "databaseId": "pawtrack_db",
+            "name": "applications",
+            "enabled": true,
+            "documentSecurity": true,
+            "attributes": [
+                {
+                    "key": "pet_name",
+                    "type": "string",
+                    "status": "available",
+                    "required": true,
+                    "array": false,
+                    "size": 255
+                },
+                {
+                    "key": "date",
+                    "type": "string",
+                    "status": "available",
+                    "required": true,
+                    "array": false,
+                    "size": 100
+                },
+                {
+                    "key": "status",
+                    "type": "string",
+                    "status": "available",
+                    "required": true,
+                    "array": false,
+                    "size": 50
+                },
+                {
+                    "key": "user_id",
+                    "type": "string",
+                    "status": "available",
+                    "required": true,
+                    "array": false,
+                    "size": 255
+                },
+                {
+                    "key": "img",
+                    "type": "string",
+                    "status": "available",
+                    "required": false,
+                    "array": false,
+                    "size": 1000
+                }
+            ],
+            "indexes": []
+        },
+        {
+            "$id": "vet_appointments",
+            "databaseId": "pawtrack_db",
+            "name": "vet_appointments",
+            "enabled": true,
+            "documentSecurity": true,
+            "attributes": [
+                {
+                    "key": "pet_name",
+                    "type": "string",
+                    "status": "available",
+                    "required": true,
+                    "array": false,
+                    "size": 255
+                },
+                {
+                    "key": "vet_name",
+                    "type": "string",
+                    "status": "available",
+                    "required": true,
+                    "array": false,
+                    "size": 255
+                },
+                {
+                    "key": "status",
+                    "type": "string",
+                    "status": "available",
+                    "required": true,
+                    "array": false,
+                    "size": 50
+                },
+                {
+                    "key": "time",
+                    "type": "string",
+                    "status": "available",
+                    "required": false,
+                    "array": false,
+                    "size": 100
+                },
+                {
+                    "key": "date",
+                    "type": "string",
+                    "status": "available",
+                    "required": false,
+                    "array": false,
+                    "size": 100
+                },
+                {
+                    "key": "user_id",
+                    "type": "string",
+                    "status": "available",
+                    "required": true,
+                    "array": false,
+                    "size": 255
+                },
+                {
+                    "key": "img",
+                    "type": "string",
+                    "status": "available",
+                    "required": false,
+                    "array": false,
+                    "size": 1000
+                }
+            ],
+            "indexes": []
+        },
+        {
+            "$id": "recycle_bin",
+            "databaseId": "pawtrack_db",
+            "name": "recycle_bin",
+            "enabled": true,
+            "documentSecurity": true,
+            "attributes": [
+                {
+                    "key": "name",
+                    "type": "string",
+                    "status": "available",
+                    "required": true,
+                    "array": false,
+                    "size": 255
+                },
+                {
+                    "key": "breed",
+                    "type": "string",
+                    "status": "available",
+                    "required": true,
+                    "array": false,
+                    "size": 255
+                },
+                {
+                    "key": "gender",
+                    "type": "string",
+                    "status": "available",
+                    "required": true,
+                    "array": false,
+                    "size": 50
+                },
+                {
+                    "key": "owner",
+                    "type": "string",
+                    "status": "available",
+                    "required": true,
+                    "array": false,
+                    "size": 255
+                },
+                {
+                    "key": "img",
+                    "type": "string",
+                    "status": "available",
+                    "required": false,
+                    "array": false,
+                    "size": 1000
+                }
+            ],
+            "indexes": []
+        }
+    ],
+    "buckets": [
+        {
+            "$id": "pawtrack_storage",
+            "name": "pawtrack_storage",
+            "permissions": [
+                "read(\"any\")",
+                "create(\"any\")",
+                "update(\"any\")",
+                "delete(\"any\")"
+            ],
+            "fileSecurity": false,
+            "enabled": true,
+            "maximumFileSize": 10485760,
+            "allowedFileExtensions": [],
+            "compression": "gzip",
+            "encryption": true,
+            "antivirus": true
+        }
+    ]
 }

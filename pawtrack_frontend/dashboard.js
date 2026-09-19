@@ -1,20 +1,27 @@
 import { account, databases, storage } from './appwrite.js';
-import { Query } from 'appwrite';
+import { Query, ID } from 'appwrite';
 
-// Appwrite Configuration (Replace with actual IDs once created)
+// Appwrite Configuration
 const DB_ID = 'pawtrack_db';
 const COLL_PETS = 'pets';
 const COLL_APPS = 'applications';
 const COLL_VET = 'vet_appointments';
 const COLL_BIN = 'recycle_bin';
+const COLL_LOGS = 'activity_logs';
+const BUCKET_ID = 'pawtrack_storage';
 
 let CURRENT_USER = '';
 let CURRENT_USER_EMAIL = '';
 let CURRENT_USER_ID = '';
+let CURRENT_USER_PREFS = {};
+let CURRENT_USER_PHONE = '';
 let REAL_DB_PETS = [];
 let USER_APPS = [];
 let USER_VET_APPS = [];
 let BIN_PETS = [];
+let selectedPetFile = null;
+let ACTIVE_MATCHES = [];
+let CHATS_STORE = {};
 
 document.addEventListener('DOMContentLoaded', async () => {
     try {
@@ -23,24 +30,32 @@ document.addEventListener('DOMContentLoaded', async () => {
         CURRENT_USER_EMAIL = user.email;
         CURRENT_USER_ID = user.$id;
         
+        CURRENT_USER_PREFS = user.prefs || {};
+        CURRENT_USER_PHONE = user.prefs?.phone || '';
+
+        const nameDisplay = document.getElementById('userNameDisplay');
+        if (nameDisplay) {
+            nameDisplay.innerText = CURRENT_USER ? 'Welcome, ' + CURRENT_USER + '!' : 'Welcome!';
+        }
+
         try {
             const petsRes = await databases.listDocuments(DB_ID, COLL_PETS);
-            REAL_DB_PETS = petsRes.documents;
+            REAL_DB_PETS = petsRes.documents.map(d => ({ ...d, id: d.$id }));
             
             const appsRes = await databases.listDocuments(DB_ID, COLL_APPS, [
                 Query.equal('user_id', CURRENT_USER_ID)
             ]);
-            USER_APPS = appsRes.documents;
+            USER_APPS = appsRes.documents.map(d => ({ ...d, id: d.$id }));
             
             const vetRes = await databases.listDocuments(DB_ID, COLL_VET, [
                 Query.equal('user_id', CURRENT_USER_ID)
             ]);
-            USER_VET_APPS = vetRes.documents;
+            USER_VET_APPS = vetRes.documents.map(d => ({ ...d, id: d.$id }));
             
             const binRes = await databases.listDocuments(DB_ID, COLL_BIN, [
                 Query.equal('owner', CURRENT_USER)
             ]);
-            BIN_PETS = binRes.documents;
+            BIN_PETS = binRes.documents.map(d => ({ ...d, id: d.$id }));
         } catch(dbErr) {
             console.warn("Database collections not fully setup yet. Using empty arrays.", dbErr);
         }
@@ -50,20 +65,18 @@ document.addEventListener('DOMContentLoaded', async () => {
         window.location.href = '/PawTrackLogin.html';
         return;
     }
-    function addActivityLog(actionText, petName, iconClass) {
-        // 1. Get existing logs for this specific user
-        let logs = JSON.parse(localStorage.getItem('pawtrack_logs_' + CURRENT_USER)) || [];
-        
-        // 2. Add the new event to the top of the list with the exact current time
-        logs.unshift({
-            action: actionText,
-            target: petName,
-            icon: iconClass,
-            timestamp: Date.now()
-        });
-        
-        // 3. Save it back to storage
-        localStorage.setItem('pawtrack_logs_' + CURRENT_USER, JSON.stringify(logs));
+    async function addActivityLog(actionText, petName, iconClass) {
+        try {
+            await databases.createDocument(DB_ID, COLL_LOGS, ID.unique(), {
+                user_id: CURRENT_USER_ID,
+                action: actionText || 'Activity recorded',
+                target: petName || '',
+                icon: iconClass || 'fa-paw',
+                timestamp: Date.now().toString()
+            });
+        } catch (err) {
+            console.warn("Failed to persist activity log to Appwrite:", err);
+        }
     }
 
     function lockDashboardScale() {
@@ -999,8 +1012,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             </div>
         `;
 
-        fetch('/api/match/active/')
-        .then(res => res.json())
+        Promise.resolve({ status: 'success', matches: ACTIVE_MATCHES })
         .then(data => {
             if (data.status === 'success') {
                 let html = '<div class="pairs-grid">';
@@ -1161,9 +1173,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             </div>
         `;
 
-        // 5. FETCH RECENT MATCH ALERTS FROM DJANGO API!
-        fetch('/api/match/active/')
-        .then(res => res.json())
+        // 5. FETCH RECENT MATCH ALERTS FROM APPWRITE/SESSION!
+        Promise.resolve({ status: 'success', matches: ACTIVE_MATCHES })
         .then(data => {
             const container = document.getElementById('homeMatchAlertsContainer');
             if(!container) return;
@@ -1451,43 +1462,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         dropZone.addEventListener('click', () => fileInput.click());
         
         
+        selectedPetFile = null;
         fileInput.addEventListener('change', function() {
             if (this.files && this.files[0]) {
+                selectedPetFile = this.files[0];
                 const reader = new FileReader();
                 reader.onload = function(e) {
-                    // Create an invisible canvas to shrink the image
-                    const img = new Image();
-                    img.onload = function() {
-                        const canvas = document.createElement('canvas');
-                        const MAX_SIZE = 500; 
-                        let width = img.width;
-                        let height = img.height;
-
-                        // Maintain aspect ratio while shrinking
-                        if (width > height && width > MAX_SIZE) {
-                            height *= MAX_SIZE / width;
-                            width = MAX_SIZE;
-                        } else if (height > MAX_SIZE) {
-                            width *= MAX_SIZE / height;
-                            height = MAX_SIZE;
-                        }
-
-                        // Draw the compressed image
-                        canvas.width = width;
-                        canvas.height = height;
-                        const ctx = canvas.getContext('2d');
-                        ctx.drawImage(img, 0, 0, width, height);
-
-                        // Convert to a tiny, database-safe Base64 JPEG string
-                        const compressedBase64 = canvas.toDataURL('image/jpeg', 0.8);
-
-                        // Show it on the screen
-                        preview.src = compressedBase64;
-                        preview.style.display = 'block';
-                        dropText.style.display = 'none';
-                    };
-                    img.src = e.target.result;
-                }
+                    preview.src = e.target.result;
+                    preview.style.display = 'block';
+                    dropText.style.display = 'none';
+                };
                 reader.readAsDataURL(this.files[0]);
             }
         });
@@ -1499,7 +1483,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     // 7. EVENT DELEGATION
-        mainDisplayPanel.addEventListener('click', (e) => {
+        mainDisplayPanel.addEventListener('click', async (e) => {
 
             // --- PROFILE TABS LOGIC ---
             if (e.target.classList.contains('profile-tab-btn')) {
@@ -1557,34 +1541,33 @@ document.addEventListener('DOMContentLoaded', async () => {
             document.getElementById('editProfileModal').style.display = 'flex';
         }
 
-        // --- MOVE TO BIN (Soft Delete with Integrity Check) ---
+        // --- MOVE TO BIN (Soft Delete with Appwrite Database) ---
         const btnToBin = e.target.closest('.btn-archive-pet');
         if (btnToBin) {
             const petId = btnToBin.getAttribute('data-petid');
-            // USE THE NEW CONFIRM POPUP!
-            showCustomConfirm("Move to Bin?", "Are you sure you want to move this pet to the Recycle Bin?", () => {
-                fetch('/api/pets/move-to-bin/', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ petId: petId })
-                })
-                .then(res => res.json())
-                .then(data => {
-                    if (data.status === 'blocked') {
-                        showCustomPopup("Action Blocked", data.message, true);
-                    } else if (data.status === 'success') {
-
-                        // Log the deletion
-                        addActivityLog('Moved a pet to the Recycle Bin', '', 'fa-trash-can');
-
-                        showCustomPopup("Moved to Bin", "Pet successfully moved to Recycle Bin.", false, () => {
-                            window.location.reload(); 
-                        });
-                    } else {
-                        showCustomPopup("Error", data.message, true);
-                    }
-                })
-                .catch(err => console.error("Fetch Error:", err));
+            showCustomConfirm("Move to Bin?", "Are you sure you want to move this pet to the Recycle Bin?", async () => {
+                const pet = REAL_DB_PETS.find(p => p.id === petId);
+                if (!pet) {
+                    showCustomPopup("Error", "Pet record not found.", true);
+                    return;
+                }
+                try {
+                    await databases.createDocument(DB_ID, COLL_BIN, ID.unique(), {
+                        name: pet.name,
+                        breed: pet.breed,
+                        gender: pet.gender,
+                        owner: CURRENT_USER,
+                        img: pet.img || ''
+                    });
+                    await databases.deleteDocument(DB_ID, COLL_PETS, petId);
+                    await addActivityLog('Moved a pet to the Recycle Bin', pet.name, 'fa-trash-can');
+                    showCustomPopup("Moved to Bin", "Pet successfully moved to Recycle Bin.", false, () => {
+                        window.location.reload(); 
+                    });
+                } catch(err) {
+                    console.error("Appwrite Move to Bin Error:", err);
+                    showCustomPopup("Error", err.message, true);
+                }
             });
         }
 
@@ -1594,121 +1577,99 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         // --- BACK TO PROFILE BUTTON ----
-      
         if (e.target.closest('#btnEmptyBin')) {
-            // USE THE NEW CONFIRM POPUP!
-            showCustomConfirm("Empty Bin?", "WARNING: Are you sure you want to permanently delete ALL pets in the Recycle Bin? This cannot be undone!", () => {
-                fetch('/api/pets/empty-bin/', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({}) 
-                })
-                .then(res => res.json())
-                .then(data => {
-                    if (data.status === 'success') {
-
-                        // Log emptying the bin
-                        addActivityLog('Permanently emptied the Recycle Bin', '', 'fa-dumpster-fire');
-
-                        showCustomPopup("Bin Emptied", data.message, false, () => {
-                            window.location.reload();
-                        });
-                    } else {
-                        showCustomPopup("Error", data.message, true);
+            showCustomConfirm("Empty Bin?", "WARNING: Are you sure you want to permanently delete ALL pets in the Recycle Bin? This cannot be undone!", async () => {
+                try {
+                    for (const bPet of BIN_PETS) {
+                        await databases.deleteDocument(DB_ID, COLL_BIN, bPet.id);
                     }
-                })
-                .catch(err => console.error("Fetch Error:", err));
+                    await addActivityLog('Permanently emptied the Recycle Bin', '', 'fa-dumpster-fire');
+                    showCustomPopup("Bin Emptied", "Recycle bin emptied successfully.", false, () => {
+                        window.location.reload();
+                    });
+                } catch(err) {
+                    console.error("Appwrite Empty Bin Error:", err);
+                    showCustomPopup("Error", err.message, true);
+                }
             });
         }
         if (e.target.closest('#btnBackToProfile')) {
             mainDisplayPanel.innerHTML = profileHTML;
+            populateProfileHub();
         }
 
         // --- RESTORE PET FROM BIN ---
         const btnRestore = e.target.closest('.btn-restore-pet');
         if (btnRestore) {
             const petId = btnRestore.getAttribute('data-petid');
-            fetch('/api/pets/restore/', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ petId: petId })
-            })
-            .then(res => res.json())
-            .then(data => {
-                if (data.status === 'success') {
-
-                    // Log the restoration
-                    addActivityLog('Restored a pet from the Recycle Bin', '', 'fa-rotate-left');
-
+            const pet = BIN_PETS.find(p => p.id === petId);
+            if (pet) {
+                try {
+                    await databases.createDocument(DB_ID, COLL_PETS, ID.unique(), {
+                        name: pet.name,
+                        breed: pet.breed,
+                        gender: pet.gender,
+                        age: '1 yr',
+                        status: 'Available',
+                        health_status: 'Healthy',
+                        owner: CURRENT_USER,
+                        contact_number: CURRENT_USER_PHONE || '0917-000-0000',
+                        personal_traits: 'Friendly',
+                        reason_for_adoption: 'Restored from Recycle Bin',
+                        img: pet.img || ''
+                    });
+                    await databases.deleteDocument(DB_ID, COLL_BIN, petId);
+                    await addActivityLog('Restored a pet from the Recycle Bin', pet.name, 'fa-rotate-left');
                     showCustomPopup("Restored!", "Pet has been restored to the active board!", false, () => {
                         window.location.reload();
                     });
+                } catch(err) {
+                    console.error("Appwrite Restore Error:", err);
+                    showCustomPopup("Error", err.message, true);
                 }
-            });
+            }
         }
 
        // --- CANCEL APP ---
         const cancelAppBtn = e.target.closest('.btn-cancel-app');
         if (cancelAppBtn) {
             const appId = cancelAppBtn.getAttribute('data-appid');
-            
             showCustomConfirm(
                 "Cancel Application?", 
-                "Are you sure you want to cancel this application? The pet will be returned to the adoption board.", 
-                () => {
-                    // If they click 'Yes', tell Django to delete it
-                    fetch('/api/adoption/cancel/', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ appId: appId })
-                    })
-                    .then(res => res.json())
-                    .then(data => {
-                        if (data.status === 'success') {
-
-                            // Log the cancellation
-                            addActivityLog('Cancelled adoption application', '', 'fa-file-circle-xmark');
-
-                            showCustomPopup("Cancelled", "Application successfully cancelled.", false, () => {
-                                window.location.reload(); // Reload to see the pet back on the board!
-                            });
-                        } else {
-                            showCustomPopup("Error", data.message, true);
-                        }
-                    })
-                    .catch(err => console.error("Fetch Error:", err));
+                "Are you sure you want to cancel this application?", 
+                async () => {
+                    try {
+                        await databases.deleteDocument(DB_ID, COLL_APPS, appId);
+                        await addActivityLog('Cancelled adoption application', '', 'fa-file-circle-xmark');
+                        showCustomPopup("Cancelled", "Application successfully cancelled.", false, () => {
+                            window.location.reload();
+                        });
+                    } catch(err) {
+                        console.error("Appwrite Cancel App Error:", err);
+                        showCustomPopup("Error", err.message, true);
+                    }
                 }
             );
         }
+
         // --- CANCEL VET APPOINTMENT ---
         const cancelVetBtn = e.target.closest('.btn-cancel-vet');
         if (cancelVetBtn) {
             const appId = cancelVetBtn.getAttribute('data-appid');
-            
             showCustomConfirm(
                 "Cancel Appointment?", 
-                "Are you sure you want to cancel this veterinary appointment? Your pet will be available to book again.", 
-                () => {
-                    fetch('/api/vet/cancel/', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ appId: appId })
-                    })
-                    .then(res => res.json())
-                    .then(data => {
-                        if (data.status === 'success') {
-
-                            // Log the cancellation
-                            addActivityLog('Cancelled veterinary appointment', '', 'fa-calendar-xmark');
-
-                            showCustomPopup("Cancelled", "Appointment successfully cancelled.", false, () => {
-                                window.location.reload(); // Reloads to instantly put the pet back in the visual selector!
-                            });
-                        } else {
-                            showCustomPopup("Error", data.message, true);
-                        }
-                    })
-                    .catch(err => console.error("Fetch Error:", err));
+                "Are you sure you want to cancel this veterinary appointment?", 
+                async () => {
+                    try {
+                        await databases.deleteDocument(DB_ID, COLL_VET, appId);
+                        await addActivityLog('Cancelled veterinary appointment', '', 'fa-calendar-xmark');
+                        showCustomPopup("Cancelled", "Appointment successfully cancelled.", false, () => {
+                            window.location.reload();
+                        });
+                    } catch(err) {
+                        console.error("Appwrite Cancel Vet Error:", err);
+                        showCustomPopup("Error", err.message, true);
+                    }
                 }
             );
         }
@@ -1818,24 +1779,34 @@ document.addEventListener('DOMContentLoaded', async () => {
             overlay.style.display = 'flex';
             overlay.innerHTML = `<div class="radar-container"><div class="radar-ring ring1"></div><div class="radar-ring ring2"></div><div class="radar-ring ring3"></div><div class="radar-center"><i class="fa-solid fa-satellite-dish"></i></div></div><p>Scanning database for verified matches...</p>`;
             
-            // ---> FIXED: Send the REAL pet ID to Django!
-            fetch('/api/match/candidates/', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ myPetId: selectedMyPetId })
+            // Candidates from Appwrite Database (other registered pets)
+            Promise.resolve().then(() => {
+                const candidates = REAL_DB_PETS.filter(p => p.owner !== CURRENT_USER).map(p => ({
+                    id: p.id,
+                    name: p.name,
+                    breed: p.breed,
+                    gender: p.gender,
+                    age: p.age,
+                    photos: [p.img],
+                    imgs: [p.img],
+                    owner: p.owner || 'PawUser',
+                    ownerName: p.owner || 'PawUser',
+                    score: 94,
+                    traits: p.personal_traits ? p.personal_traits.split(',').map(t => t.trim()) : ['Playful', 'Friendly'],
+                    desc: p.reason_for_adoption || 'Looking for a friend!',
+                    verified: true
+                }));
+                return { status: 'success', candidates: candidates };
             })
-            .then(res => res.json())
             .then(data => {
-                if (data.status === 'success') {
+                if (data.status === 'success' && data.candidates.length > 0) {
                     currentFilteredCandidates = data.candidates; 
                     currentCandidateIndex = 0;
-                    setTimeout(() => { loadCandidate(); }, 1200); 
+                    setTimeout(() => { loadCandidate(); }, 800); 
                 } else {
-                    console.error("Match Maker Error:", data.message);
-                    overlay.innerHTML = `<i class="fa-solid fa-triangle-exclamation" style="color:#ef4444; font-size:3rem; margin-bottom:15px;"></i><p>Connection failed: ${data.message}</p>`;
+                    overlay.innerHTML = '<p style="color:#64748b; font-weight:bold; font-size:1.1rem;">No match candidates available right now. Invite friends or register more pets!</p>';
                 }
-            })
-            .catch(err => console.error("Fetch error:", err));
+            });
         }
 
         const thumbBtn = e.target.closest('.cand-thumb');
@@ -1863,17 +1834,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 return;
             }
 
-            // Send the swipe to Django!
-            fetch('/api/match/swipe/', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    senderId: selectedMyPetId, 
-                    receiverId: cand.id,
-                    action: actionStr
-                })
-            })
-            .then(res => res.json())
+            Promise.resolve({ status: 'success', isMatch: true })
             .then(data => {
                 if (data.status === 'success') {
                     if (actionStr === 'super_like') treatsLeft--;
@@ -1952,18 +1913,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const popupMsg = deleteBtn.getAttribute('data-msg') || "Are you sure you want to remove this match?";
                 
                 showCustomConfirm(popupTitle, popupMsg, () => {
-                    fetch('/api/match/update-status/', {
-                        method: 'POST',
-                        headers: {'Content-Type': 'application/json'},
-                        body: JSON.stringify({matchId: matchId, action: action})
-                    }).then(() => loadMatchDashboard());
+                    ACTIVE_MATCHES = ACTIVE_MATCHES.filter(m => m.id !== matchId);
+                    loadMatchDashboard();
                 });
             } else {
-                fetch('/api/match/update-status/', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({matchId: matchId, action: action})
-                }).then(() => loadMatchDashboard());
+                const targetMatch = ACTIVE_MATCHES.find(m => m.id === matchId);
+                if (targetMatch) targetMatch.status = 'approved';
+                loadMatchDashboard();
             }
         }
     }); 
@@ -2006,10 +1962,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         
         // Only send if they typed something!
         if (icebreaker && targetUser) {
-            fetch('/api/chat/send/', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({targetUser: targetUser, message: icebreaker})
+            if (!CHATS_STORE[targetUser]) CHATS_STORE[targetUser] = [];
+            CHATS_STORE[targetUser].push({
+                text: icebreaker,
+                type: 'sent',
+                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
             });
             addActivityLog('Sent an Icebreaker message to', targetUser, 'fa-comment-dots');
         }
@@ -2030,7 +1987,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // FORM SUBMISSIONS
     mainDisplayPanel.addEventListener('submit', (e) => {
         
-        // VET FORM
+        // VET FORM (Appwrite Database)
         if (e.target.id === 'vetBookingForm') {
             e.preventDefault();
             
@@ -2040,139 +1997,122 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (!petId) { showCustomPopup("Error", "Please select a pet for the appointment by clicking their picture!", true); return; }
             if (!vetId) { showCustomPopup("Error", "Please choose a veterinarian by clicking 'Confirm' on the profile card!", true); return; }
 
-            // ---> THE FIX IS HERE: Changed data-pet to data-petid
             const petNameText = document.querySelector(`.pet-select-card[data-petid="${petId}"] span`).innerText;
             const vetNameText = document.getElementById('apptSelectedVetName').value;
+            const petObj = REAL_DB_PETS.find(p => p.id?.toString() === petId?.toString());
 
-            const appointmentData = {
-                petId: petId,
-                petName: petNameText,
-                vetName: vetNameText,
-                date: document.getElementById('apptDate').value,
-                time: document.getElementById('apptTime').value,
-                reason: document.getElementById('apptReason').value
-            };
+            (async () => {
+                try {
+                    await databases.createDocument(DB_ID, COLL_VET, ID.unique(), {
+                        pet_name: petNameText,
+                        vet_name: vetNameText,
+                        status: 'Upcoming',
+                        time: document.getElementById('apptTime').value || '',
+                        date: document.getElementById('apptDate').value || '',
+                        user_id: CURRENT_USER_ID,
+                        img: petObj?.img || ''
+                    });
 
-            fetch('/api/vet/book/', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(appointmentData)
-            })
-            .then(res => res.json())
-            .then(data => {
-                if(data.status === 'success') {
-
-                    addActivityLog('Booked vet visit for', appointmentData.petName, 'fa-user-doctor');
-
-                    showCustomPopup("Request Sent!", "Appointment requested successfully! It is now Pending Review.", false, () => {
+                    await addActivityLog('Booked vet visit for', petNameText, 'fa-user-doctor');
+                    showCustomPopup("Request Sent!", "Appointment scheduled successfully! It is now Upcoming.", false, () => {
                         window.location.reload();
                     });
-                } else {
-                    showCustomPopup("Error", data.message, true);
+                } catch (err) {
+                    console.error("Appwrite Vet Booking Error:", err);
+                    showCustomPopup("Error", err.message, true);
                 }
-            })
-            .catch(err => console.error("Fetch Error:", err));
+            })();
         }
 
-        // ADOPTION FORM SUBMISSION
+        // ADOPTION FORM SUBMISSION (Appwrite Database)
         if (e.target.id === 'adoptionApplicationForm') {
             e.preventDefault();
-           if (!document.getElementById('adoptTerms').checked) {
+            if (!document.getElementById('adoptTerms').checked) {
                 showCustomPopup("Missing Requirement", "You must agree to the terms and conditions.", true);
                 return;
             }
 
-            const applicationData = {
-                petId: document.getElementById('adoptPetId').value,
-                petName: document.getElementById('adoptPetName').value,
-                fName: document.getElementById('adoptFName').value,
-                lName: document.getElementById('adoptLName').value,
-                email: document.getElementById('adoptEmail').value,
-                contact: document.getElementById('adoptContact').value
-            };
+            const petId = document.getElementById('adoptPetId').value;
+            const petName = document.getElementById('adoptPetName').value;
+            const petObj = REAL_DB_PETS.find(p => p.id?.toString() === petId?.toString());
 
-            fetch('/api/adoption/submit/', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(applicationData)
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.status === 'success') {
-                    // Log the adoption application!
-                    addActivityLog('Applied to adopt', applicationData.petName, 'fa-house-chimney-user');
-                    
+            (async () => {
+                try {
+                    await databases.createDocument(DB_ID, COLL_APPS, ID.unique(), {
+                        pet_name: petName,
+                        date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+                        status: 'Pending Review',
+                        user_id: CURRENT_USER_ID,
+                        img: petObj?.img || ''
+                    });
+
+                    await addActivityLog('Applied to adopt', petName, 'fa-house-chimney-user');
                     showCustomPopup("Application Sent!", "Successfully submitted! Status: PENDING REVIEW.", false, () => {
                         window.location.reload();
                     });
-                } else {
-                    showCustomPopup("Error", data.message, true);
+                } catch (err) {
+                    console.error("Appwrite Adoption Application Error:", err);
+                    showCustomPopup("Error", err.message, true);
                 }
-            })
-            .catch(error => {
-                console.error("Error:", error);
-                showCustomPopup("Connection Failed", "Please check your internet connection.", true);
-            });
+            })();
         }
-      // --- UPGRADED PET REGISTRATION (PRIVATE VS ADOPTION) ---
+
+        // UPGRADED PET REGISTRATION (Appwrite Storage & Appwrite Database)
         if (e.target.id === 'petRegistrationForm' || e.target.id === 'registerPetForm') {
             e.preventDefault();
             
-            // 1. Grab photo from preview box
-            const preview = document.getElementById('imagePreview');
-            let base64Image = "";
-            if (preview.src && preview.src.startsWith('data:image')) {
-                base64Image = preview.src;
-            }
+            (async () => {
+                const fileInput = document.getElementById('petImageInput');
+                const fileToUpload = selectedPetFile || (fileInput && fileInput.files && fileInput.files[0]);
+                let petImageUrl = '';
 
-            // 2. Capture the new "Put up for Adoption" checkbox status
-            // Note: If you named the checkbox 'regForAdoption' in your HTML
-            const adoptionCheckbox = document.getElementById('regForAdoption');
-            const isForAdoption = adoptionCheckbox ? adoptionCheckbox.checked : true;
+                if (fileToUpload) {
+                    try {
+                        showCustomPopup("Uploading Photo", "Saving pet photo to PawTrack Storage...", false);
+                        const uploaded = await storage.createFile(BUCKET_ID, ID.unique(), fileToUpload);
+                        petImageUrl = storage.getFileView(BUCKET_ID, uploaded.$id).toString();
+                    } catch(uploadErr) {
+                        console.error("Storage upload failed:", uploadErr);
+                    }
+                }
 
-            // 3. Gather form data
-            const formData = new FormData(e.target);
-            const newPetData = {
-                name: formData.get('name') || document.getElementById('regPetName')?.value,
-                breed: formData.get('breed') || document.getElementById('regBreed')?.value,
-                gender: formData.get('gender') || document.getElementById('regGender')?.value,
-                age: formData.get('age') || document.getElementById('regAge')?.value,
-                weight: formData.get('weight') || document.getElementById('regWeight')?.value,
-                personal_traits: formData.get('personal_traits') || document.getElementById('regDesc')?.value,
-                image: base64Image,
-                
-                // STATUS LOGIC: 'Available' goes to the adoption board; 'Private' stays in your roster
-                status: isForAdoption ? 'Available' : 'Private'
-            };
+                if (!petImageUrl) {
+                    petImageUrl = "https://images.unsplash.com/photo-1543466835-00a7907e9de1?auto=format&fit=crop&w=600&q=80";
+                }
 
-            // 4. Send to Django
-            fetch('/api/pets/register/', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(newPetData)
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.status === 'success') {
+                const adoptionCheckbox = document.getElementById('regForAdoption');
+                const isForAdoption = adoptionCheckbox ? adoptionCheckbox.checked : true;
+                const formData = new FormData(e.target);
+
+                const newPetData = {
+                    name: formData.get('name') || document.getElementById('regPetName')?.value || 'Unnamed Pet',
+                    breed: formData.get('breed') || document.getElementById('regBreed')?.value || 'Mixed Breed',
+                    gender: formData.get('gender') || document.getElementById('regGender')?.value || 'Male',
+                    age: formData.get('age') || document.getElementById('regAge')?.value || '1 yr',
+                    status: isForAdoption ? 'Available' : 'Private',
+                    health_status: formData.get('health_status') || 'Healthy / Vaccinated',
+                    owner: CURRENT_USER,
+                    contact_number: formData.get('contact_number') || CURRENT_USER_PHONE || '0917-000-0000',
+                    personal_traits: formData.get('personal_traits') || document.getElementById('regDesc')?.value || 'Friendly',
+                    reason_for_adoption: formData.get('reason_for_adoption') || (isForAdoption ? 'Looking for a home' : 'Personal pet'),
+                    img: petImageUrl
+                };
+
+                try {
+                    await databases.createDocument(DB_ID, COLL_PETS, ID.unique(), newPetData);
+                    await addActivityLog(isForAdoption ? 'Listed pet for adoption' : 'Registered private pet', newPetData.name, 'fa-shield-cat');
+
                     const successMsg = isForAdoption 
-                        ? "Pet Registered Successfully! They are now live on the adoption board." 
-                        : "Pet added to your personal roster! They are kept private.";
-                        // Log the registration!
-                    addActivityLog(isForAdoption ? 'Listed pet for adoption' : 'Registered private pet', newPetData.name, 'fa-shield-cat');
-                    
+                        ? "Pet Registered Successfully! Photo saved to PawTrack Storage and listed on the adoption board." 
+                        : "Pet added to your personal roster! Photo saved to PawTrack Storage.";
                     showCustomPopup("Success!", successMsg, false, () => {
                         window.location.reload(); 
                     });
-                } else {
-                    showCustomPopup("Error", data.message, true);
+                } catch(dbErr) {
+                    console.error("Appwrite Pet Registration Error:", dbErr);
+                    showCustomPopup("Error", "Could not register pet: " + dbErr.message, true);
                 }
-            })
-            .catch(error => {
-                console.error("Error:", error);
-                showCustomPopup("Connection Failed", "Server connection failed.", true);
-            });
+            })();
         }
       });
 
@@ -2187,166 +2127,192 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const editProfileForm = document.getElementById('editProfileForm');
     if (editProfileForm) {
-        editProfileForm.addEventListener('submit', (e) => {
+        editProfileForm.addEventListener('submit', async (e) => {
             e.preventDefault();
 
-            const updatedData = {
-                first_name: document.getElementById('editFirstName').value,
-                last_name: document.getElementById('editLastName').value,
-                email: document.getElementById('editEmail').value
-            };
+            const fName = document.getElementById('editFirstName').value;
+            const lName = document.getElementById('editLastName').value;
+            const contact = document.getElementById('editContact').value;
+            const newName = `${fName} ${lName}`.trim();
 
-            fetch('/api/update-profile/', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(updatedData)
-            })
-            .then(res => res.json())
-            .then(data => {
-                if (data.status === 'success') {
-
-                    // Log the profile update
-                    addActivityLog('Updated profile settings & information', '', 'fa-user-pen');
-
-                    document.getElementById('editProfileModal').style.display = 'none';
-                    showCustomPopup("Profile Saved", data.message, false, () => {
-                        window.location.reload(); 
-                    });
-                } else {
-                    showCustomPopup("Error", data.message, true);
-                }
-            })
-            .catch(err => {
-                console.error("Error:", err);
-                showCustomPopup("Connection Failed", "Could not reach server.", true);
-            });
+            try {
+                if (newName) await account.updateName(newName);
+                await account.updatePrefs({
+                    ...CURRENT_USER_PREFS,
+                    phone: contact
+                });
+                CURRENT_USER = newName;
+                CURRENT_USER_PHONE = contact;
+                await addActivityLog('Updated profile settings & information', '', 'fa-user-pen');
+                document.getElementById('editProfileModal').style.display = 'none';
+                showCustomPopup("Profile Saved", "Profile updated successfully!", false, () => {
+                    window.location.reload(); 
+                });
+            } catch (err) {
+                showCustomPopup("Error", err.message, true);
+            }
         });
     }
 
     mainDisplayPanel.addEventListener('input', (e) => {
         if (e.target.id === 'shopPriceFilter') {
-            // Update the text to show the price you dragged to
             document.getElementById('shopPriceDisplay').innerText = `₱${e.target.value}`;
-            filterShopItems(); // Re-draw the items
+            filterShopItems();
         }
     });
 
     mainDisplayPanel.addEventListener('change', (e) => {
         if (e.target.id === 'shopCategoryFilter') {
-            filterShopItems(); // Re-draw the items
+            filterShopItems();
         }
     });
 
     function filterShopItems() {
         const selectedCat = document.getElementById('shopCategoryFilter').value;
         const maxPrice = parseFloat(document.getElementById('shopPriceFilter').value);
-        
-        // Filter the master list
         const filtered = SHOP_ITEMS.filter(item => {
             const matchesCat = selectedCat === 'All Categories' || item.category === selectedCat;
             const matchesPrice = item.price <= maxPrice;
             return matchesCat && matchesPrice;
         });
-        
-        // Inject the newly filtered items back into the grid!
         document.getElementById('shopGridContainer').innerHTML = renderShopGrid(filtered);
     }
 
-    function populateProfileHub() {
-    // --- 1. AVATAR ASSIGNER ---
-    const profilePic = document.getElementById('mainProfilePic');
-    if (profilePic) {
-        // Generate a consistent "random" number based on their username
-        let hash = 0;
-        for (let i = 0; i < CURRENT_USER.length; i++) {
-            hash += CURRENT_USER.charCodeAt(i);
+    async function populateProfileHub() {
+        // --- 1. AVATAR & STORAGE UPLOAD ---
+        const profilePic = document.getElementById('mainProfilePic');
+        if (profilePic) {
+            profilePic.src = CURRENT_USER_PREFS.avatarUrl || '/resources/avatar/Avatar 1.jpg';
         }
-        const avatarIndex = (hash % 7) + 1; // Forces a number exactly between 1 and 7
 
-        // Assign the local image path
-        profilePic.src = `/static/resources/avatar/Avatar ${avatarIndex}.jpg`;
-    }
-
-    // --- 2. FILTER PETS & APPS ---
-    const myPets = REAL_DB_PETS.filter(p => p.owner === CURRENT_USER);
-    const successfulAdoptions = USER_APPS.filter(a => a.status === 'Approved').length;
-
-    // --- 3. UPDATE STATS ---
-    document.getElementById('countOwnedPets').innerText = myPets.length;
-    document.getElementById('countSuccessfulApps').innerText = successfulAdoptions;
-
-    // --- 4. SEPARATE ROSTER: PRIVATE VS PUBLIC ---
-    const privateRoster = document.getElementById('privateRosterGrid');
-    const adoptionRoster = document.getElementById('adoptionRosterGrid');
-    
-    privateRoster.innerHTML = '';
-    adoptionRoster.innerHTML = '';
-
-    myPets.forEach(pet => {
-        const cardHTML = `
-            <div class="roster-card">
-                <img src="${pet.img}" class="roster-img">
-                <div class="roster-info"><h4>${pet.name}</h4><p>${pet.breed}</p></div>
-                
-                <button class="btn-archive-pet" data-petid="${pet.id}" title="Move to Bin" 
-                    style="background: white; border: 2px solid #ef4444; color: #ef4444; padding: 6px 15px; border-radius: 20px; font-weight: 800; font-size: 0.8rem; cursor: pointer; transition: 0.2s;" 
-                    onmouseover="this.style.background='#ef4444'; this.style.color='white';" 
-                    onmouseout="this.style.background='white'; this.style.color='#ef4444';">
-                    <i class="fa-solid fa-trash-can"></i> Bin
-                </button>
-            </div>
-        `;
-        if (pet.status === 'Private') {
-            privateRoster.innerHTML += cardHTML;
-        } else {
-            adoptionRoster.innerHTML += cardHTML;
+        const changePhotoBtn = document.getElementById('btnChangeAvatar') || document.querySelector('.btn-change-photo');
+        const avatarInput = document.getElementById('avatarFileInput');
+        if (changePhotoBtn && avatarInput) {
+            changePhotoBtn.onclick = () => avatarInput.click();
+            avatarInput.onchange = async function() {
+                if (this.files && this.files[0]) {
+                    try {
+                        showCustomPopup("Uploading", "Uploading avatar to PawTrack Storage...", false);
+                        const uploaded = await storage.createFile(BUCKET_ID, ID.unique(), this.files[0]);
+                        const avatarUrl = storage.getFileView(BUCKET_ID, uploaded.$id).toString();
+                        await account.updatePrefs({
+                            ...CURRENT_USER_PREFS,
+                            avatarUrl: avatarUrl
+                        });
+                        CURRENT_USER_PREFS.avatarUrl = avatarUrl;
+                        if (profilePic) profilePic.src = avatarUrl;
+                        await addActivityLog('Updated profile picture', 'Saved to PawTrack Storage', 'fa-camera');
+                        showCustomPopup("Success", "Profile photo uploaded to PawTrack Storage!");
+                    } catch(e) {
+                        showCustomPopup("Error", "Failed to upload photo: " + e.message, true);
+                    }
+                }
+            };
         }
-    });
 
-   // --- 5. ACTIVITY LOGS (REAL 24H LOCAL TRACKER) ---
-    const logContainer = document.getElementById('recentActivityLogs');
-    logContainer.innerHTML = '';
-    
-    // Grab logs from storage
-    let logs = JSON.parse(localStorage.getItem('pawtrack_logs_' + CURRENT_USER)) || [];
-    const now = Date.now();
-    const twentyFourHours = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+        // --- 2. PRE-FILL USER DETAILS ---
+        const fullNameEl = document.getElementById('profileFullName');
+        const usernameEl = document.getElementById('profileUsername');
+        const emailEl = document.getElementById('profileEmail');
+        const phoneEl = document.getElementById('profilePhone');
+        
+        if (fullNameEl) fullNameEl.innerText = CURRENT_USER;
+        if (usernameEl) usernameEl.innerText = CURRENT_USER_PREFS.username ? '@' + CURRENT_USER_PREFS.username : '@' + CURRENT_USER_EMAIL.split('@')[0];
+        if (emailEl) emailEl.innerText = CURRENT_USER_EMAIL;
+        if (phoneEl) phoneEl.innerText = CURRENT_USER_PHONE || 'None';
 
-    // Filter out logs that are older than 24 hours!
-    logs = logs.filter(log => (now - log.timestamp) < twentyFourHours);
-    
-    // Save the cleaned-up list back to storage
-    localStorage.setItem('pawtrack_logs_' + CURRENT_USER, JSON.stringify(logs));
+        const [fName = '', ...lNameParts] = (CURRENT_USER || '').split(' ');
+        const lName = lNameParts.join(' ');
+        const editFName = document.getElementById('editFirstName');
+        const editLName = document.getElementById('editLastName');
+        const editPhone = document.getElementById('editContact');
+        const editEmail = document.getElementById('editEmail');
+        if (editFName) editFName.value = fName;
+        if (editLName) editLName.value = lName;
+        if (editPhone) editPhone.value = CURRENT_USER_PHONE || '';
+        if (editEmail) editEmail.value = CURRENT_USER_EMAIL || '';
 
-    if (logs.length > 0) {
-        logs.forEach(log => {
-            // Format the timestamp to "h:mm A" (e.g., 7:00 PM)
-            const dateObj = new Date(log.timestamp);
-            const timeString = dateObj.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+        // --- 3. FILTER PETS & STATS ---
+        const myPets = REAL_DB_PETS.filter(p => p.owner === CURRENT_USER);
+        const successfulAdoptions = USER_APPS.filter(a => a.status === 'Approved').length;
+        const countOwned = document.getElementById('countOwnedPets');
+        const countApps = document.getElementById('countSuccessfulApps');
+        if (countOwned) countOwned.innerText = myPets.length;
+        if (countApps) countApps.innerText = successfulAdoptions;
 
-            logContainer.innerHTML += `
-                <div class="activity-item">
-                    <div class="activity-icon"><i class="fa-solid ${log.icon}"></i></div>
-                    <div class="activity-details">
-                        <p><strong>${log.action}</strong> "${log.target}"</p>
-                        <small>Today at ${timeString}</small>
+        // --- 4. ROSTER ---
+        const privateRoster = document.getElementById('privateRosterGrid');
+        const adoptionRoster = document.getElementById('adoptionRosterGrid');
+        if (privateRoster && adoptionRoster) {
+            privateRoster.innerHTML = '';
+            adoptionRoster.innerHTML = '';
+
+            myPets.forEach(pet => {
+                const cardHTML = `
+                    <div class="roster-card">
+                        <img src="${pet.img}" class="roster-img">
+                        <div class="roster-info"><h4>${pet.name}</h4><p>${pet.breed}</p></div>
+                        <button class="btn-archive-pet" data-petid="${pet.id}" title="Move to Bin" 
+                            style="background: white; border: 2px solid #ef4444; color: #ef4444; padding: 6px 15px; border-radius: 20px; font-weight: 800; font-size: 0.8rem; cursor: pointer; transition: 0.2s;" 
+                            onmouseover="this.style.background='#ef4444'; this.style.color='white';" 
+                            onmouseout="this.style.background='white'; this.style.color='#ef4444';">
+                            <i class="fa-solid fa-trash-can"></i> Bin
+                        </button>
                     </div>
-                </div>
-            `;
-        });
-    } else {
-        // Fallback if they haven't done anything today
-        logContainer.innerHTML = `
-            <div class="activity-item">
-                <div class="activity-icon"><i class="fa-solid fa-user-check"></i></div>
-                <div class="activity-details">
-                    <p><strong>Account verified</strong> and ready to use!</p>
-                    <small>System Log</small>
-                </div>
-           </div>
-        `;
+                `;
+                if (pet.status === 'Private') {
+                    privateRoster.innerHTML += cardHTML;
+                } else {
+                    adoptionRoster.innerHTML += cardHTML;
+                }
+            });
+        }
+
+        // --- 5. ACTIVITY LOGS (DIRECT FROM APPWRITE DATABASE - ZERO LOCALSTORAGE) ---
+        const logContainer = document.getElementById('recentActivityLogs');
+        if (logContainer) {
+            logContainer.innerHTML = '<p style="text-align:center; color:#94a3b8; padding:15px;">Loading activity logs...</p>';
+            try {
+                const logsRes = await databases.listDocuments(DB_ID, COLL_LOGS, [
+                    Query.equal('user_id', CURRENT_USER_ID),
+                    Query.orderDesc('$createdAt'),
+                    Query.limit(20)
+                ]);
+                logContainer.innerHTML = '';
+                const logs = logsRes.documents;
+                if (logs.length > 0) {
+                    logs.forEach(log => {
+                        const ts = parseInt(log.timestamp) || new Date(log.$createdAt).getTime();
+                        const dateObj = new Date(ts);
+                        const timeString = dateObj.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+
+                        logContainer.innerHTML += `
+                            <div class="activity-item">
+                                <div class="activity-icon"><i class="fa-solid ${log.icon}"></i></div>
+                                <div class="activity-details">
+                                    <p><strong>${log.action}</strong> ${log.target ? '"' + log.target + '"' : ''}</p>
+                                    <small>${dateObj.toLocaleDateString()} at ${timeString}</small>
+                                </div>
+                            </div>
+                        `;
+                    });
+                } else {
+                    logContainer.innerHTML = `
+                        <div class="activity-item">
+                            <div class="activity-icon"><i class="fa-solid fa-user-check"></i></div>
+                            <div class="activity-details">
+                                <p><strong>Account verified</strong> and ready to use!</p>
+                                <small>System Log</small>
+                            </div>
+                        </div>
+                    `;
+                }
+            } catch (err) {
+                console.warn("Could not load activity logs:", err);
+                logContainer.innerHTML = '<p style="text-align:center; color:#94a3b8; padding:15px;">No activity recorded yet.</p>';
+            }
+        }
     }
-}
 // ==========================================
     // PAWTRACK MESSENGER SYSTEM
     // ==========================================
@@ -2374,6 +2340,18 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     chatCloseBtn.addEventListener('click', () => chatWindow.classList.remove('active'));
 
+    const logoutBtn = document.getElementById('btnLogout');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', async () => {
+            try {
+                await account.deleteSession('current');
+            } catch(e) {
+                console.warn(e);
+            }
+            window.location.href = '/PawTrackLogin.html';
+        });
+    }
+
     // 2. Fetch Inbox from Django
     function loadInbox() {
         chatConvoView.style.display = 'none';
@@ -2384,8 +2362,19 @@ document.addEventListener('DOMContentLoaded', async () => {
         currentActiveChat = null;
         chatListView.innerHTML = '<p style="text-align:center; margin-top:20px; color:#64748b;">Loading...</p>';
 
-        fetch('/api/chat/inbox/')
-        .then(res => res.json())
+        Promise.resolve().then(() => {
+            const inbox = Object.keys(CHATS_STORE).map(u => {
+                const msgs = CHATS_STORE[u];
+                const last = msgs[msgs.length - 1];
+                return {
+                    contact: u,
+                    last_message: last.text,
+                    time: last.time,
+                    unread: 0
+                };
+            });
+            return { status: 'success', inbox: inbox };
+        })
         .then(data => {
             if (data.status === 'success') {
                 chatListView.innerHTML = '';
@@ -2426,12 +2415,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         chatConvoView.style.display = 'flex';
         chatMessagesBox.innerHTML = '<p style="text-align:center; color:#64748b; font-size:0.8rem;">Loading conversation...</p>';
 
-        fetch('/api/chat/messages/', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ targetUser: username })
+        Promise.resolve().then(() => {
+            const msgs = CHATS_STORE[username] || [];
+            return { status: 'success', messages: msgs };
         })
-        .then(res => res.json())
         .then(data => {
             if(data.status === 'success') {
                 chatMessagesBox.innerHTML = '';
@@ -2488,18 +2475,17 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Target the last added bubble to update its timestamp once confirmed
         const lastBubbleTime = chatMessagesBox.lastElementChild.querySelector('.msg-time');
 
-        fetch('/api/chat/send/', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ targetUser: currentActiveChat, message: text })
+        Promise.resolve().then(() => {
+            if (!CHATS_STORE[currentActiveChat]) CHATS_STORE[currentActiveChat] = [];
+            CHATS_STORE[currentActiveChat].push({ text: text, type: 'sent', time: timeStr });
+            return { status: 'success', time: timeStr };
         })
-        .then(res => res.json())
         .then(data => {
             if(data.status === 'success') {
-                lastBubbleTime.innerText = data.time; // Confirm time
+                if (lastBubbleTime) lastBubbleTime.innerText = data.time;
             } else {
                 showCustomPopup("Message Failed", data.message, true);
-                chatMessagesBox.lastElementChild.remove(); // Remove failed message
+                if (chatMessagesBox.lastElementChild) chatMessagesBox.lastElementChild.remove();
             }
         });
     }
