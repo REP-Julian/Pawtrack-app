@@ -1,0 +1,11 @@
+{
+  "name": "pawtrack",
+  "private": true,
+  "workspaces": [
+    "pawtrack_frontend"
+  ],
+  "scripts": {
+    "build": "npm --prefix pawtrack_frontend run build && node -e \"const fs = require('fs'); fs.cpSync('pawtrack_frontend/dist', 'dist', { recursive: true });\"",
+    "start": "npm --prefix pawtrack_frontend run preview"
+  }
+}
