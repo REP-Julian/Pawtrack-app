@@ -1,24 +1,23 @@
-{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <style>
     body {
-        background: url("{% static 'resources/image/background.png' %}") no-repeat center center fixed;
+        background: url("/resources/image/background.png") no-repeat center center fixed;
         background-size: cover;
     }
 </style>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Paw Track Login</title>
-    <link rel="stylesheet" href="{% static 'style.css' %}">
+    <link rel="stylesheet" href="/style.css">
 </head>
 <body>
 <div class="overlay-container">
     <div class="glass-card login-section">
         <div class="logo-area">
             <div class="logo-placeholder">
-                <img src="{% static 'resources/image/Logo.png' %}" alt="Paw Track" class="brand-logo">
+                <img src="/resources/image/Logo.png" alt="Paw Track" class="brand-logo">
             </div>
             <h2>Welcome Back!</h2>
         </div>
@@ -36,13 +35,13 @@
                 </div>
             </div>
             <button type="submit" class="btn-login">LOGIN</button>
-            <a href="/register/" class="create-link">CREATE ACCOUNT</a>
+            <a href="/CreateAccount.html" class="create-link">CREATE ACCOUNT</a>
         </form>
     </div>
 
     <div class="glass-card info-section">
         <div class="preview-img-wrapper">
-            <img src="{% static 'resources/image/background.png' %}" alt="Family with dog" class="preview-img">
+            <img src="/resources/image/background.png" alt="Family with dog" class="preview-img">
         </div>
         <div class="description">
             <p>The Paw Track System is a digital platform designed to help abandoned and surrendered pets find new, loving homes.</p>
@@ -69,6 +68,6 @@
     <p class="custom-popup-message" id="floatingPopupMessage">Message goes here.</p>
 </div>
 
-<script src="{% static 'script.js' %}"></script>
+<script type="module" src="/script.js"></script>
 </body>
 </html>

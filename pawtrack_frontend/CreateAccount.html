@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <style>
+        body {
+            background: url("/resources/image/background.png") no-repeat center center fixed;
+            background-size: cover;
+        }
+    </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Paw Track - Create Account</title>
+    <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<div class="overlay-container">
+    <div class="glass-card signup-card">
+        <div class="header-section">
+            <h2>Create Your Account</h2>
+            <p>Simple, secure and fast — create your PawTrack account</p>
+        </div>
+
+        <form id="signupForm" class="signup-grid">
+            <div class="form-group">
+                <label>Last Name:</label>
+                <input type="text" placeholder="" required>
+            </div>
+            <div class="form-group">
+                <label>First Name:</label>
+                <input type="text" required>
+            </div>
+            <div class="form-group">
+                <label>Middle Name:</label>
+                <input type="text">
+            </div>
+            <div class="form-group">
+                <label>Contact Number:</label>
+                <input type="tel" required>
+            </div>
+            <div class="form-group">
+                <label>Email Address:</label>
+                <input type="email" required>
+            </div>
+            <div class="form-group">
+                <label>Username:</label>
+                <input type="text" required>
+            </div>
+            <div class="form-group">
+                <label>Password:</label>
+                <input type="password" class="pass-field" required>
+            </div>
+            <div class="form-group">
+                <label>Repeat Password:</label>
+                <input type="password" class="pass-field" required>
+            </div>
+
+            <div class="full-width">
+                <label class="checkbox-container">
+                    <input type="checkbox" id="showPasswords"> Show Passwords
+                </label>
+            </div>
+
+            <div class="form-footer full-width">
+                <a href="/PawTrackLogin.html" class="back-link">BACK TO LOGIN</a>
+                <button type="submit" class="btn-login-small">CREATE ACCOUNT</button>
+            </div>
+        </form>
+    </div>
+</div>
+<div class="floating-popup-box" id="floatingPopupBox">
+    <button class="custom-popup-close" id="floatingPopupClose">&times;</button>
+    <h2 class="custom-popup-title title-success" id="floatingPopupTitle">Title</h2>
+    <p class="custom-popup-message" id="floatingPopupMessage">Message goes here.</p>
+</div>
+
+<script type="module" src="/script.js"></script>
+</body>
+</html>

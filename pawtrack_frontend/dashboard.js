@@ -1,5 +1,55 @@
-document.addEventListener('DOMContentLoaded', () => {
+import { account, databases, storage } from './appwrite.js';
+import { Query } from 'appwrite';
 
+// Appwrite Configuration (Replace with actual IDs once created)
+const DB_ID = 'pawtrack_db';
+const COLL_PETS = 'pets';
+const COLL_APPS = 'applications';
+const COLL_VET = 'vet_appointments';
+const COLL_BIN = 'recycle_bin';
+
+let CURRENT_USER = '';
+let CURRENT_USER_EMAIL = '';
+let CURRENT_USER_ID = '';
+let REAL_DB_PETS = [];
+let USER_APPS = [];
+let USER_VET_APPS = [];
+let BIN_PETS = [];
+
+document.addEventListener('DOMContentLoaded', async () => {
+    try {
+        const user = await account.get();
+        CURRENT_USER = user.name;
+        CURRENT_USER_EMAIL = user.email;
+        CURRENT_USER_ID = user.$id;
+        
+        try {
+            const petsRes = await databases.listDocuments(DB_ID, COLL_PETS);
+            REAL_DB_PETS = petsRes.documents;
+            
+            const appsRes = await databases.listDocuments(DB_ID, COLL_APPS, [
+                Query.equal('user_id', CURRENT_USER_ID)
+            ]);
+            USER_APPS = appsRes.documents;
+            
+            const vetRes = await databases.listDocuments(DB_ID, COLL_VET, [
+                Query.equal('user_id', CURRENT_USER_ID)
+            ]);
+            USER_VET_APPS = vetRes.documents;
+            
+            const binRes = await databases.listDocuments(DB_ID, COLL_BIN, [
+                Query.equal('owner', CURRENT_USER)
+            ]);
+            BIN_PETS = binRes.documents;
+        } catch(dbErr) {
+            console.warn("Database collections not fully setup yet. Using empty arrays.", dbErr);
+        }
+
+    } catch (e) {
+        console.error("User not logged in", e);
+        window.location.href = '/PawTrackLogin.html';
+        return;
+    }
     function addActivityLog(actionText, petName, iconClass) {
         // 1. Get existing logs for this specific user
         let logs = JSON.parse(localStorage.getItem('pawtrack_logs_' + CURRENT_USER)) || [];

@@ -95,7 +95,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 password: passwordFields[0].value
             };
 
-            fetch('/api_register/', {
+            fetch('/api/register/', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(newUserData)
@@ -143,7 +143,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const usernameVal = document.getElementById('username').value;
             const passwordVal = document.getElementById('password').value;
 
-            fetch('/api_login/', {
+            fetch('/api/login/', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username: usernameVal, password: passwordVal })

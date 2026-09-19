@@ -1,4 +1,3 @@
-{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Paw Track</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{% static 'dashboard-style.css' %}">
+    <link rel="stylesheet" href="/dashboard-style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <style>
@@ -56,7 +55,7 @@
 <aside class="sidebar">
     <div class="sidebar-header">
         <div class="sidebar-logo">
-            <img src="{% static 'resources/image/Logo.png' %}" alt="Paw Track Logo" onerror="this.style.display='none'">
+            <img src="/resources/image/Logo.png" alt="Paw Track Logo" onerror="this.style.display='none'">
         </div>
         <h3 id="userNameDisplay">Welcome!</h3>
     </div>
@@ -71,7 +70,7 @@
     </nav>
 
    <div class="sidebar-footer">
-        <button class="nav-btn logout-btn" onclick="window.location.href='/api/logout/'">
+        <button class="nav-btn logout-btn" id="btnLogout">
             <i class="fa-solid fa-right-from-bracket"></i> Logout
         </button>
     </div>
@@ -116,11 +115,11 @@
                 </div>
             </div>
             <div class="profile-info-section">
-                <h1 class="profile-name">{{ user.first_name }} {{ user.last_name }}</h1>
-                <p class="profile-username">@{{ user.username }}</p>
+                <h1 class="profile-name" id="profileFullName">...</h1>
+                <p class="profile-username" id="profileUsername">@...</p>
                 <div class="profile-details-grid">
-                    <div class="detail-item"><i class="fa-solid fa-envelope"></i><span>{{ user.email }}</span></div>
-                    <div class="detail-item"><i class="fa-solid fa-phone"></i><span id="profilePhone">{{ user.userprofile.contact_number|default:"+63 XXX XXX XXXX" }}</span></div>
+                    <div class="detail-item"><i class="fa-solid fa-envelope"></i><span id="profileEmail">...</span></div>
+                    <div class="detail-item"><i class="fa-solid fa-phone"></i><span id="profilePhone">...</span></div>
                     <div class="detail-item"><i class="fa-solid fa-shield-halved"></i><span>Verified User</span></div>
                 </div>
                 <div class="profile-badges">
@@ -306,20 +305,20 @@
         <form id="editProfileForm">
             <div class="input-field">
                 <label>First Name</label>
-                <input type="text" id="editFirstName" value="{{ user.first_name }}" required>
+                <input type="text" id="editFirstName" value="" required>
             </div>
             <div class="input-field">
                 <label>Last Name</label>
-                <input type="text" id="editLastName" value="{{ user.last_name }}" required>
+                <input type="text" id="editLastName" value="" required>
             </div>
             
             <div class="input-field">
                 <label>Contact Number</label>
-                <input type="tel" id="editContact" value="{{ user.userprofile.contact_number }}" required>
+                <input type="tel" id="editContact" value="" required>
             </div>
             <div class="input-field">
                 <label>Email Address</label>
-                <input type="email" id="editEmail" value="{{ user.email }}" required>
+                <input type="email" id="editEmail" value="" required>
             </div>
             <button type="submit" class="btn-primary">Save Changes</button>
         </form>
@@ -355,13 +354,7 @@
     </div>
 </div>
 
-<script>
-    const REAL_DB_PETS = {{ real_pets_json|safe }};
-    const BIN_PETS = {{ archived_pets_json|safe }};
-    const USER_APPS = {{ user_apps_json|safe }};
-    const CURRENT_USER = "{{ user.username }}";
-    const USER_VET_APPS = {{ user_vet_apps_json|safe }};
-</script>
-<script src="{% static 'dashboard.js' %}"></script>
+<script type="module" src="/appwrite.js"></script>
+<script type="module" src="/dashboard.js"></script>
 </body>
 </html>
