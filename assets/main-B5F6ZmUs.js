@@ -1,0 +1,1 @@
+import{t as e}from"./appwrite-BZhLN0km.js";async function t(){try{let t=await e.get();if(t&&t.$id){window.location.replace(`./Dashboard.html`);return}}catch{}window.location.replace(`./PawTrackLogin.html`)}t();

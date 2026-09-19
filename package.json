@@ -5,7 +5,7 @@
     "pawtrack_frontend"
   ],
   "scripts": {
-    "build": "cd pawtrack_frontend && npm install && npm run build && node -e \"const fs = require('fs'); fs.cpSync('dist', '../dist', { recursive: true });\"",
+    "build": "cd pawtrack_frontend && npm install && npm run build && node -e \"const fs = require('fs'); fs.cpSync('dist', '../dist', { recursive: true }); fs.cpSync('dist', '..', { recursive: true });\"",
     "start": "npm --prefix pawtrack_frontend run preview"
   }
 }

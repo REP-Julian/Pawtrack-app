@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<style>
+    body {
+        background: url("/resources/image/background.png") no-repeat center center fixed;
+        background-size: cover;
+    }
+</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Paw Track Login</title>
+    <link rel="stylesheet" href="/style.css">
+  <script type="module" crossorigin src="/assets/appwrite-BfOVdxfC.js"></script>
+  <script type="module" crossorigin src="/assets/script-BgS436Om.js"></script>
+</head>
+<body>
+<div class="overlay-container">
+    <div class="glass-card login-section">
+        <div class="logo-area">
+            <div class="logo-placeholder">
+                <img src="/resources/image/Logo.png" alt="Paw Track" class="brand-logo">
+            </div>
+            <h2>Welcome Back!</h2>
+        </div>
+
+        <form id="loginForm">
+            <div class="input-field">
+                <label>USERNAME:</label>
+                <input type="text" id="username" required>
+            </div>
+            <div class="input-field">
+                <label>PASSWORD:</label>
+                <div class="password-input-container">
+                    <input type="password" id="password" placeholder="Enter your password" required>
+                    <span id="togglePass" class="eye-icon">👁️</span>
+                </div>
+            </div>
+            <button type="submit" class="btn-login">LOGIN</button>
+            <a href="/CreateAccount.html" class="create-link">CREATE ACCOUNT</a>
+        </form>
+    </div>
+
+    <div class="glass-card info-section">
+        <div class="preview-img-wrapper">
+            <img src="/resources/image/background.png" alt="Family with dog" class="preview-img">
+        </div>
+        <div class="description">
+            <p>The Paw Track System is a digital platform designed to help abandoned and surrendered pets find new, loving homes.</p>
+        </div>
+        <div class="feature-list">
+            <div class="item">
+                <span class="purple-text">Fast adoptions</span>
+                <small>Find pets quickly</small>
+            </div>
+            <div class="item">
+                <span class="purple-text">Vet & Care</span>
+                <small>Schedule appointments</small>
+            </div>
+            <div class="item">
+                <span class="purple-text">Secure accounts</span>
+                <small>Keep info safe</small>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="floating-popup-box" id="floatingPopupBox">
+    <button class="custom-popup-close" id="floatingPopupClose">&times;</button>
+    <h2 class="custom-popup-title title-success" id="floatingPopupTitle">Title</h2>
+    <p class="custom-popup-message" id="floatingPopupMessage">Message goes here.</p>
+</div>
+
+</body>
+</html>
