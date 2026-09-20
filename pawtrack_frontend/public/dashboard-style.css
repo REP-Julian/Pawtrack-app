@@ -4648,9 +4648,12 @@ body {
     overflow: hidden;
 }
 
-.image-drop-zone:hover {
+.image-drop-zone:hover,
+.image-drop-zone.drag-over {
     border-color: var(--primary);
     background: var(--primary-light);
+    transform: scale(1.02);
+    box-shadow: 0 0 0 4px rgba(234, 88, 12, 0.15);
 }
 
 .drop-zone-text {

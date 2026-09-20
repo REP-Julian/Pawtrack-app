@@ -23,6 +23,79 @@ let selectedPetFile = null;
 let ACTIVE_MATCHES = [];
 let CHATS_STORE = {};
 
+/**
+ * Smooth Appwrite Storage Helper:
+ * Automatically downsizes and compresses large camera/phone photos client-side
+ * before transmitting to Appwrite Storage. Avoids upload timeouts, saves bandwidth,
+ * and ensures sub-second rendering across all devices.
+ */
+async function optimizeImageBeforeUpload(file, maxDimension = 1600, quality = 0.85) {
+    if (!file || !file.type || !file.type.startsWith('image/')) {
+        return file;
+    }
+    // Skip SVG and animated GIF
+    if (file.type === 'image/svg+xml' || file.type === 'image/gif') {
+        return file;
+    }
+    // If already lightweight (< 250KB), upload directly
+    if (file.size <= 250 * 1024) {
+        return file;
+    }
+
+    return new Promise((resolve) => {
+        const img = new Image();
+        const reader = new FileReader();
+
+        reader.onload = (e) => {
+            img.onload = () => {
+                try {
+                    let width = img.naturalWidth || img.width;
+                    let height = img.naturalHeight || img.height;
+
+                    if (width > maxDimension || height > maxDimension) {
+                        if (width > height) {
+                            height = Math.round((height * maxDimension) / width);
+                            width = maxDimension;
+                        } else {
+                            width = Math.round((width * maxDimension) / height);
+                            height = maxDimension;
+                        }
+                    }
+
+                    const canvas = document.createElement('canvas');
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+
+                    const mimeType = (file.type === 'image/png' && file.size < 1024 * 1024) ? 'image/png' : 'image/jpeg';
+                    canvas.toBlob((blob) => {
+                        if (blob && blob.size < file.size) {
+                            const extension = mimeType === 'image/png' ? '.png' : '.jpg';
+                            const baseName = (file.name || 'image').replace(/\.[^/.]+$/, "");
+                            const optimizedFile = new File([blob], `${baseName}${extension}`, {
+                                type: mimeType,
+                                lastModified: Date.now()
+                            });
+                            console.log(`[PawTrack Storage] Compressed ${file.name} (${(file.size / 1024).toFixed(1)} KB -> ${(optimizedFile.size / 1024).toFixed(1)} KB)`);
+                            resolve(optimizedFile);
+                        } else {
+                            resolve(file);
+                        }
+                    }, mimeType, quality);
+                } catch (err) {
+                    console.warn("[PawTrack Storage] Canvas compression bypassed:", err);
+                    resolve(file);
+                }
+            };
+            img.onerror = () => resolve(file);
+            img.src = e.target.result;
+        };
+        reader.onerror = () => resolve(file);
+        reader.readAsDataURL(file);
+    });
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
     // --- EYE-FRIENDLY THEME INITIALIZATION & TOGGLE ---
     const btnThemeToggle = document.getElementById('btnThemeToggle');
@@ -276,7 +349,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     petGridContent += `
                         <div class="pet-item-wrapper">
                             <div class="pet-card ${genderClass}">
-                                <img src="${petImgSrc}" alt="${pet.name}" class="pet-card-img">
+                                <img src="${petImgSrc}" alt="${pet.name}" class="pet-card-img" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1543466835-00a7907e9de1?auto=format&fit=crop&w=600&q=80';">
                                 <div class="pet-card-body">
                                     <h3 class="pet-name">${pet.name}</h3>
                                     <p class="pet-breed">${pet.breed}</p>
@@ -445,7 +518,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 binContent += `
                     <div class="pet-item-wrapper">
                         <div class="pet-card ${genderClass}" style="opacity: 0.85;">
-                            <img src="${pet.img}" alt="${pet.name}" class="pet-card-img" style="filter: grayscale(40%);">
+                            <img src="${pet.img}" alt="${pet.name}" class="pet-card-img" style="filter: grayscale(40%);" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1543466835-00a7907e9de1?auto=format&fit=crop&w=600&q=80';">
                             <div class="pet-card-body">
                                 <h3 class="pet-name">${pet.name}</h3>
                                 <p class="pet-breed">${pet.breed}</p>
@@ -691,7 +764,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const genderClass = pet.gender && pet.gender.toLowerCase() === 'female' ? 'gender-female' : 'gender-male';
                 petSelectorHTML += `
                     <div class="pet-select-card ${genderClass}" data-petid="${pet.id}" data-pet="${pet.id}">
-                        <img src="${pet.img}" alt="${pet.name}">
+                        <img src="${pet.img || 'https://images.unsplash.com/photo-1543466835-00a7907e9de1?auto=format&fit=crop&w=600&q=80'}" alt="${pet.name}" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1543466835-00a7907e9de1?auto=format&fit=crop&w=600&q=80';">
                         <span>${pet.name}</span>
                     </div>
                 `;
@@ -881,9 +954,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                     <div class="image-drop-zone" id="imageDropZone">
                         <img src="" alt="Preview" id="imagePreview" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; border-radius: 12px; background-color: #f8fafc;">
                         <div class="drop-zone-text" id="dropZoneText">
-                            <i class="fa-solid fa-camera"></i><p>Upload Photo</p>
+                            <i class="fa-solid fa-camera"></i><p>Upload or Drop Photo</p>
                         </div>
-                        <input type="file" id="petImageInput" accept="image/png, image/jpeg" hidden>
+                        <input type="file" id="petImageInput" accept="image/*" hidden>
                     </div>
                 </div>
                 
@@ -947,7 +1020,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 
                 myPetsListHTML += `
                     <div class="my-pet-card ${genderClass}" data-petid="${pet.id}">
-                        <img src="${petImage}" alt="${pet.name}">
+                        <img src="${petImage}" alt="${pet.name}" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1543466835-00a7907e9de1?auto=format&fit=crop&w=600&q=80';">
                         <div class="my-pet-info">
                             <h4>${pet.name}</h4>
                             <p>${pet.gender} • ${pet.breed}</p>
@@ -1843,22 +1916,56 @@ document.addEventListener('DOMContentLoaded', async () => {
         const preview = document.getElementById('imagePreview');
         const dropText = document.getElementById('dropZoneText');
 
-        dropZone.addEventListener('click', () => fileInput.click());
-        
-        
-        selectedPetFile = null;
-        fileInput.addEventListener('change', function() {
-            if (this.files && this.files[0]) {
-                selectedPetFile = this.files[0];
+        if (dropZone && fileInput) {
+            dropZone.addEventListener('click', () => fileInput.click());
+
+            const handlePetFile = (file) => {
+                if (!file) return;
+                if (!file.type || !file.type.startsWith('image/')) {
+                    showCustomPopup("Invalid File", "Please choose a photo image file (PNG, JPG, WebP, etc.).", true);
+                    return;
+                }
+                selectedPetFile = file;
                 const reader = new FileReader();
                 reader.onload = function(e) {
-                    preview.src = e.target.result;
-                    preview.style.display = 'block';
-                    dropText.style.display = 'none';
+                    if (preview) {
+                        preview.src = e.target.result;
+                        preview.style.display = 'block';
+                    }
+                    if (dropText) dropText.style.display = 'none';
                 };
-                reader.readAsDataURL(this.files[0]);
-            }
-        });
+                reader.readAsDataURL(file);
+            };
+
+            ['dragenter', 'dragover'].forEach(eventName => {
+                dropZone.addEventListener(eventName, (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    dropZone.classList.add('drag-over');
+                });
+            });
+
+            ['dragleave', 'drop'].forEach(eventName => {
+                dropZone.addEventListener(eventName, (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    dropZone.classList.remove('drag-over');
+                });
+            });
+
+            dropZone.addEventListener('drop', (e) => {
+                if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                    handlePetFile(e.dataTransfer.files[0]);
+                }
+            });
+
+            selectedPetFile = null;
+            fileInput.addEventListener('change', function() {
+                if (this.files && this.files[0]) {
+                    handlePetFile(this.files[0]);
+                }
+            });
+        }
 
         document.getElementById('btnCancelReg').addEventListener('click', () => {
             loadHome();
@@ -2456,8 +2563,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                 if (fileToUpload) {
                     try {
-                        showCustomPopup("Uploading Photo", "Saving pet photo to PawTrack Storage...", false);
-                        const uploaded = await storage.createFile(BUCKET_ID, ID.unique(), fileToUpload);
+                        showCustomPopup("Uploading Photo", "Optimizing and saving pet photo to PawTrack Storage...", false);
+                        const optimizedFile = await optimizeImageBeforeUpload(fileToUpload, 1600, 0.85);
+                        const uploaded = await storage.createFile(BUCKET_ID, ID.unique(), optimizedFile);
                         petImageUrl = storage.getFileView(BUCKET_ID, uploaded.$id).toString();
                     } catch(uploadErr) {
                         console.error("Storage upload failed:", uploadErr);
@@ -2587,6 +2695,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const profilePic = document.getElementById('mainProfilePic');
         if (profilePic) {
             profilePic.src = CURRENT_USER_PREFS.avatarUrl || '/resources/avatar/Avatar 1.jpg';
+            profilePic.onerror = () => { profilePic.src = '/resources/avatar/Avatar 1.jpg'; };
         }
 
         const changePhotoBtn = document.getElementById('btnChangeAvatar') || document.querySelector('.btn-change-photo');
@@ -2596,8 +2705,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             avatarInput.onchange = async function() {
                 if (this.files && this.files[0]) {
                     try {
-                        showCustomPopup("Uploading", "Uploading avatar to PawTrack Storage...", false);
-                        const uploaded = await storage.createFile(BUCKET_ID, ID.unique(), this.files[0]);
+                        showCustomPopup("Uploading Avatar", "Optimizing and saving avatar to PawTrack Storage...", false);
+                        const optimized = await optimizeImageBeforeUpload(this.files[0], 800, 0.85);
+                        const uploaded = await storage.createFile(BUCKET_ID, ID.unique(), optimized);
                         const avatarUrl = storage.getFileView(BUCKET_ID, uploaded.$id).toString();
                         await account.updatePrefs({
                             ...CURRENT_USER_PREFS,
@@ -2608,7 +2718,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                         await addActivityLog('Updated profile picture', 'Saved to PawTrack Storage', 'fa-camera');
                         showCustomPopup("Success", "Profile photo uploaded to PawTrack Storage!");
                     } catch(e) {
-                        showCustomPopup("Error", "Failed to upload photo: " + e.message, true);
+                        console.error("Avatar storage upload failed:", e);
+                        showCustomPopup("Error", "Failed to upload photo: " + (e.message || e), true);
                     }
                 }
             };
@@ -2657,7 +2768,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             myPets.forEach(pet => {
                 const cardHTML = `
                     <div class="roster-card">
-                        <img src="${pet.img}" class="roster-img">
+                        <img src="${pet.img || 'https://images.unsplash.com/photo-1543466835-00a7907e9de1?auto=format&fit=crop&w=600&q=80'}" class="roster-img" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1543466835-00a7907e9de1?auto=format&fit=crop&w=600&q=80';">
                         <div class="roster-info"><h4>${pet.name}</h4><p>${pet.breed}</p></div>
                         <button class="btn-archive-pet" data-petid="${pet.id}" title="Move to Bin" 
                             style="background: white; border: 2px solid #ef4444; color: #ef4444; padding: 6px 15px; border-radius: 20px; font-weight: 800; font-size: 0.8rem; cursor: pointer; transition: 0.2s;" 
