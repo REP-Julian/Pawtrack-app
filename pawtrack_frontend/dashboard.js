@@ -80,31 +80,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     function lockDashboardScale() {
-        const currentWidth = window.innerWidth;
-
-        // --- NEW RULE: Turn off scaling for mobile phones! ---
-        if (currentWidth <= 768) {
-            document.body.style.zoom = '1';
-            document.body.style.width = '100vw';
-            document.body.style.height = '100vh';
-            if (navigator.userAgent.toLowerCase().includes('firefox')) {
-                document.body.style.transform = 'none';
-            }
-            return; // This stops the rest of the desktop scaling logic
-        }
-
-        // --- Original Desktop Scaling Logic ---
-        const targetWidth = 1920; 
-        const scaleRatio = currentWidth / targetWidth;
-
-        document.body.style.zoom = scaleRatio;
-        document.body.style.width = `${100 / scaleRatio}vw`;
-        document.body.style.height = `${100 / scaleRatio}vh`;
-
+        // Natural fluid responsiveness handled purely by modern CSS Grid & Flexbox!
+        document.body.style.zoom = '1';
+        document.body.style.width = '100%';
+        document.body.style.height = '100%';
         if (navigator.userAgent.toLowerCase().includes('firefox')) {
-            document.body.style.zoom = '1'; 
-            document.body.style.transform = `scale(${scaleRatio})`;
-            document.body.style.transformOrigin = 'top left';
+            document.body.style.transform = 'none';
         }
     }
    
@@ -313,53 +294,56 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         if (typeof USER_APPS !== 'undefined' && USER_APPS.length > 0) {
             USER_APPS.forEach(app => {
-                
+                const isApproved = app.status === 'Approved';
+                const statusBadgeBg = isApproved ? 'var(--emerald-light, #D1FAE5)' : 'var(--amber-light, #FEF3C7)';
+                const statusBadgeColor = isApproved ? '#065F46' : '#92400E';
+                const cardBorderColor = isApproved ? 'rgba(16, 185, 129, 0.3)' : 'rgba(217, 119, 6, 0.25)';
+
                 const cardHTML = `
-                <div class="app-item-wrapper" style="margin-bottom: 15px;">
-                    <div class="app-card" style="border: 1px solid ${app.status === 'Approved' ? '#fca5a5' : '#bfdbfe'}; border-radius: 12px; padding: 15px; display: flex; justify-content: space-between; align-items: center; background: white; z-index: 2; position: relative;">
-                        <div style="display: flex; gap: 15px; align-items: center;">
-                            <img src="${app.img}" alt="${app.pet_name}" style="width: 60px; height: 60px; border-radius: 8px; object-fit: cover; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+                <div class="app-item-wrapper" style="margin-bottom: 18px;">
+                    <div class="app-card" style="border: 1px solid ${cardBorderColor}; border-radius: 18px; padding: 18px 22px; display: flex; justify-content: space-between; align-items: center; background: #FFFFFF; box-shadow: 0 4px 16px rgba(45, 30, 20, 0.05); z-index: 2; position: relative;">
+                        <div style="display: flex; gap: 16px; align-items: center;">
+                            <img src="${app.img}" alt="${app.pet_name}" style="width: 64px; height: 64px; border-radius: 14px; object-fit: cover; box-shadow: 0 2px 8px rgba(0,0,0,0.08); border: 2px solid white;">
                             <div>
-                                <h3 style="margin: 0; color: #1e293b;">${app.pet_name}</h3>
-                                <small style="color: #64748b;">Applied on: ${app.date}</small>
+                                <h3 style="margin: 0 0 4px 0; color: #1F2421; font-family: var(--font-heading); font-size: 1.2rem; font-weight: 800;">${app.pet_name}</h3>
+                                <small style="color: #6B7280; font-weight: 500;"><i class="fa-regular fa-calendar-check" style="margin-right: 4px; color: var(--primary);"></i> Applied: ${app.date}</small>
                             </div>
                         </div>
-                        <div style="display: flex; gap: 15px; align-items: center;">
-                            <span style="background: ${app.status === 'Approved' ? '#dcfce7' : '#fef3c7'}; color: ${app.status === 'Approved' ? '#166534' : '#b45309'}; padding: 5px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: bold;">
-                                ● ${app.status}
+                        <div style="display: flex; gap: 12px; align-items: center;">
+                            <span style="background: ${statusBadgeBg}; color: ${statusBadgeColor}; padding: 6px 14px; border-radius: 9999px; font-size: 0.8rem; font-weight: 800; display: inline-flex; align-items: center; gap: 6px;">
+                                <i class="fa-solid fa-circle" style="font-size: 0.45rem;"></i> ${app.status}
                             </span>
                             
-                            <button class="${app.status === 'Approved' ? 'btn-primary' : 'btn-view-app'}" data-target="app-details-${app.id}" style="background: ${app.status === 'Approved' ? '#ec4899' : 'white'}; color: ${app.status === 'Approved' ? 'white' : '#4f46e5'}; border: ${app.status === 'Approved' ? 'none' : '1px solid #cbd5e1'}; padding: 8px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 5px;">
-                                ${app.status === 'Approved' ? 'Finalize' : 'View <i class="fa-solid fa-chevron-down"></i>'}
+                            <button class="${isApproved ? 'btn-adopt' : 'btn-view-app'}" data-target="app-details-${app.id}" style="${isApproved ? 'padding: 9px 20px;' : 'padding: 9px 18px; background: #FAF8F5; border: 1px solid rgba(45,49,46,0.12); color: #1F2421; border-radius: 12px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 6px;'}">
+                                ${isApproved ? '<i class="fa-solid fa-heart"></i> Finalize' : 'Details <i class="fa-solid fa-chevron-down" style="font-size: 0.75rem;"></i>'}
                             </button>
                         </div>
                     </div>
 
-                    <div class="app-details-dropdown" id="app-details-${app.id}" style="display: none; background: white; border: 1px solid #cbd5e1; border-top: 1px dashed #cbd5e1; border-radius: 0 0 12px 12px; padding: 25px 20px 20px 20px; margin-top: -10px; position: relative; z-index: 1;">
-                        <div class="details-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <div class="app-details-dropdown" id="app-details-${app.id}" style="display: none; background: #FFFFFF; border: 1px solid rgba(45, 49, 46, 0.08); border-top: 1px dashed rgba(45, 49, 46, 0.15); border-radius: 0 0 18px 18px; padding: 24px; margin-top: -12px; position: relative; z-index: 1; box-shadow: 0 8px 24px rgba(45,30,20,0.06);">
+                        <div class="details-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
                             <div class="detail-box">
-                                <label style="display: block; font-size: 0.75rem; color: #64748b; text-transform: uppercase; font-weight: 700; margin-bottom: 5px;">Pet Name</label>
-                                <p style="margin: 0; color: #0f172a; font-weight: 600; font-size: 1rem;">${app.pet_name}</p>
+                                <label>Pet Name</label>
+                                <p>${app.pet_name}</p>
                             </div>
                             <div class="detail-box">
-                                <label style="display: block; font-size: 0.75rem; color: #64748b; text-transform: uppercase; font-weight: 700; margin-bottom: 5px;">Date Applied</label>
-                                <p style="margin: 0; color: #0f172a; font-weight: 600; font-size: 1rem;">${app.date}</p>
+                                <label>Date Applied</label>
+                                <p>${app.date}</p>
                             </div>
                             <div class="detail-box" style="grid-column: 1 / -1;">
-                                <label style="display: block; font-size: 0.75rem; color: #64748b; text-transform: uppercase; font-weight: 700; margin-bottom: 5px;">Application Status</label>
-                                <p style="margin: 0; color: #0f172a; font-weight: 600; font-size: 1rem;">Your application is currently being reviewed by our team.</p>
+                                <label>Adoption Status Message</label>
+                                <p style="color: ${isApproved ? '#065F46' : '#92400E'};">${isApproved ? '🎉 Congratulations! Your adoption request is approved. Get in touch with the shelter/owner to finalize handover.' : '⏳ Your application is currently under thorough review by the caregiver. We will notify you promptly!'}</p>
                             </div>
                         </div>
-                        <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 25px;">
-                            ${app.status !== 'Approved' ? `<button class="btn-cancel-app" data-appid="${app.id}" style="padding: 10px 20px; background: white; color: #ef4444; border: 1px solid #fca5a5; border-radius: 8px; font-weight: bold; cursor: pointer;">Cancel Application</button>` : ''}
-                            <button class="btn-close-pet" data-target="app-details-${app.id}" style="padding: 10px 20px; background: white; border: 1px solid #cbd5e1; border-radius: 8px; color: #475569; font-weight: bold; cursor: pointer;">Close Details</button>
+                        <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 20px;">
+                            ${!isApproved ? `<button class="btn-cancel-app" data-appid="${app.id}" style="padding: 10px 20px; background: white; color: #EF4444; border: 1px solid #FCA5A5; border-radius: 12px; font-weight: 700; cursor: pointer; transition: all 0.2s;"><i class="fa-solid fa-ban"></i> Withdraw Application</button>` : ''}
+                            <button class="btn-close-pet" data-target="app-details-${app.id}" style="padding: 10px 20px; background: #FAF8F5; border: 1px solid rgba(45, 49, 46, 0.12); border-radius: 12px; color: #4B5563; font-weight: 700; cursor: pointer;">Close Details</button>
                         </div>
                     </div>
                 </div>
             `;
 
-                // Sort it into the correct column
-                if (app.status === 'Approved') {
+                if (isApproved) {
                     approvedCards += cardHTML;
                 } else {
                     inReviewCards += cardHTML;
@@ -367,21 +351,44 @@ document.addEventListener('DOMContentLoaded', async () => {
             });
         }
 
-        // Return the full page layout
         return `
-            <div style="padding: 20px;">
-                <h1 style="margin-bottom: 5px; color: #0f172a;"><i class="fa-solid fa-clipboard-list"></i> My Applications</h1>
-                <p style="color: #64748b; margin-bottom: 30px;">Track the status of your adoption requests.</p>
+            <div class="page-container">
+                ${getPageHeader("My Applications", "Track the journey of your adoption requests and welcome your new companion home.", "fa-solid fa-clipboard-list")}
                 
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
+                <!-- Adoption Journey Stepper Banner -->
+                <div style="background: linear-gradient(135deg, #FFFDF9 0%, #FBF7F0 100%); border: 1px solid rgba(224, 90, 71, 0.15); border-radius: 20px; padding: 24px 30px; margin-bottom: 28px; box-shadow: 0 4px 16px rgba(45,30,20,0.04);">
+                    <h4 style="font-family: var(--font-heading); font-size: 1.05rem; font-weight: 800; color: #1F2421; margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
+                        <i class="fa-solid fa-route" style="color: var(--primary);"></i> The Adoption Journey
+                    </h4>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px;">
+                        <div style="background: white; border: 1px solid rgba(45,49,46,0.08); border-radius: 14px; padding: 12px 14px; display: flex; align-items: center; gap: 10px;">
+                            <span style="width: 28px; height: 28px; border-radius: 50%; background: #FDF2F0; color: var(--primary); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.85rem;">1</span>
+                            <div><strong style="font-size: 0.85rem; display: block; color: #1F2421;">Submitted</strong><small style="color: #6B7280; font-size: 0.75rem;">Digital file sent</small></div>
+                        </div>
+                        <div style="background: white; border: 1px solid rgba(45,49,46,0.08); border-radius: 14px; padding: 12px 14px; display: flex; align-items: center; gap: 10px;">
+                            <span style="width: 28px; height: 28px; border-radius: 50%; background: #FEF3C7; color: #D97706; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.85rem;">2</span>
+                            <div><strong style="font-size: 0.85rem; display: block; color: #1F2421;">Under Review</strong><small style="color: #6B7280; font-size: 0.75rem;">Caregiver review</small></div>
+                        </div>
+                        <div style="background: white; border: 1px solid rgba(45,49,46,0.08); border-radius: 14px; padding: 12px 14px; display: flex; align-items: center; gap: 10px;">
+                            <span style="width: 28px; height: 28px; border-radius: 50%; background: #E0F2FE; color: #0284C7; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.85rem;">3</span>
+                            <div><strong style="font-size: 0.85rem; display: block; color: #1F2421;">Home Check</strong><small style="color: #6B7280; font-size: 0.75rem;">Safety verification</small></div>
+                        </div>
+                        <div style="background: white; border: 1px solid rgba(45,49,46,0.08); border-radius: 14px; padding: 12px 14px; display: flex; align-items: center; gap: 10px;">
+                            <span style="width: 28px; height: 28px; border-radius: 50%; background: #D1FAE5; color: #065F46; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.85rem;">4</span>
+                            <div><strong style="font-size: 0.85rem; display: block; color: #1F2421;">Approved</strong><small style="color: #6B7280; font-size: 0.75rem;">Welcome home! 🐾</small></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="applications-grid">
                     <div>
-                        <h3 style="color: #b45309; margin-bottom: 20px;"><i class="fa-solid fa-hourglass-half"></i> In Review</h3>
-                        ${inReviewCards || '<p style="color: #94a3b8;">No applications currently in review.</p>'}
+                        <h3 class="app-column-title" style="color: #B45309;"><i class="fa-solid fa-hourglass-half" style="color: #F59E0B;"></i> In Review</h3>
+                        ${inReviewCards || '<div class="glass-panel" style="text-align: center; padding: 40px; color: #9CA3AF;"><i class="fa-solid fa-folder-open" style="font-size: 2.5rem; margin-bottom: 12px; color: #E5E7EB;"></i><p style="font-weight: 600;">No applications currently in review.</p></div>'}
                     </div>
 
                     <div>
-                        <h3 style="color: #10b981; margin-bottom: 20px;"><i class="fa-solid fa-circle-check"></i> Approved</h3>
-                        ${approvedCards || '<p style="color: #94a3b8;">No approved applications yet.</p>'}
+                        <h3 class="app-column-title" style="color: #065F46;"><i class="fa-solid fa-circle-check" style="color: #10B981;"></i> Approved & Finalizing</h3>
+                        ${approvedCards || '<div class="glass-panel" style="text-align: center; padding: 40px; color: #9CA3AF;"><i class="fa-solid fa-circle-check" style="font-size: 2.5rem; margin-bottom: 12px; color: #E5E7EB;"></i><p style="font-weight: 600;">No approved applications yet.</p></div>'}
                     </div>
                 </div>
             </div>
