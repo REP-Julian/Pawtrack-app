@@ -4,12 +4,25 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PawTrack - Intelligent Pet Care & Community</title>
+    <meta name="color-scheme" content="light dark">
+    <script>
+        (function() {
+            try {
+                const savedTheme = localStorage.getItem('pawtrack_theme');
+                const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                const theme = savedTheme || (systemDark ? 'dark' : 'light');
+                document.documentElement.setAttribute('data-theme', theme);
+                const metaScheme = document.querySelector('meta[name="color-scheme"]');
+                if (metaScheme) metaScheme.content = theme;
+            } catch (e) {}
+        })();
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Outfit:wght@500;600;700;800;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/dashboard-style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <script type="module" crossorigin src="/assets/dashboard-CU-oYzEL.js"></script>
+  <script type="module" crossorigin src="/assets/dashboard-ycrn2w5r.js"></script>
   <link rel="modulepreload" crossorigin href="/assets/appwrite-BTLpE_3q.js">
 </head>
 <body>
@@ -61,6 +74,10 @@
         </div>
 
         <div class="header-actions">
+            <button class="btn-theme-toggle" id="btnThemeToggle" title="Toggle Light / Dark Mode" aria-label="Toggle theme">
+                <i class="fa-solid fa-moon theme-icon-moon"></i>
+                <i class="fa-solid fa-sun theme-icon-sun"></i>
+            </button>
             <button class="btn-tour" id="btnStartTour" title="Take a step-by-step interactive tour">
                 <i class="fa-solid fa-circle-question"></i> Guide &amp; Tour
             </button>
@@ -129,9 +146,9 @@
         </div>
 
         <div class="profile-tab-content active" id="tab-overview">
-            <div style="display: grid; grid-template-columns: 1fr 1.6fr; gap: 25px; align-items: start;">
+            <div class="profile-overview-grid">
                 
-                <div class="profile-stats-grid" style="display: flex; flex-direction: column; gap: 20px;">
+                <div class="profile-stats-grid">
                     <div class="home-stat-card"><div class="stat-icon paw-bg"><i class="fa-solid fa-paw"></i></div><div><h3>Owned Pets</h3><h2 id="countOwnedPets">0</h2></div></div>
                     <div class="home-stat-card"><div class="stat-icon heart-bg"><i class="fa-solid fa-heart"></i></div><div><h3>Successful Adoptions</h3><h2 id="countSuccessfulApps">0</h2></div></div>
                 </div>
@@ -142,17 +159,22 @@
                             <div class="activity-header-icon">
                                 <i class="fa-solid fa-clock-rotate-left"></i>
                             </div>
-                            <div>
+                            <div class="activity-header-text">
                                 <h3 class="activity-header-title">Recent Activity & Logs</h3>
                                 <p class="activity-header-subtitle">Real-time account security and pet logs</p>
                             </div>
                         </div>
-                        <div class="activity-header-status">
-                            <span class="live-dot"></span>
-                            <span>Live 24h</span>
+                        <div class="activity-header-actions">
+                            <button class="activity-refresh-btn" id="btnRefreshActivityLogs" title="Refresh Activity Logs" aria-label="Refresh Activity Logs">
+                                <i class="fa-solid fa-rotate-right"></i>
+                            </button>
+                            <div class="activity-header-status">
+                                <span class="live-dot"></span>
+                                <span>Live 24h</span>
+                            </div>
                         </div>
                     </div>
-                    <div class="activity-list" id="recentActivityLogs">
+                    <div class="activity-list" id="recentActivityLogs" role="feed" aria-label="Recent activity logs">
                     </div>
                 </div>
 

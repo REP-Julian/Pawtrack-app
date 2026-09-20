@@ -24,6 +24,41 @@ let ACTIVE_MATCHES = [];
 let CHATS_STORE = {};
 
 document.addEventListener('DOMContentLoaded', async () => {
+    // --- EYE-FRIENDLY THEME INITIALIZATION & TOGGLE ---
+    const btnThemeToggle = document.getElementById('btnThemeToggle');
+    const metaScheme = document.querySelector('meta[name="color-scheme"]');
+
+    function applyTheme(theme) {
+        document.documentElement.setAttribute('data-theme', theme);
+        if (metaScheme) metaScheme.content = theme;
+        if (btnThemeToggle) {
+            btnThemeToggle.setAttribute('title', theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode');
+            btnThemeToggle.setAttribute('aria-label', theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode');
+        }
+    }
+
+    const savedTheme = localStorage.getItem('pawtrack_theme');
+    const systemDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const currentTheme = savedTheme || (systemDark ? 'dark' : 'light');
+    applyTheme(currentTheme);
+
+    if (btnThemeToggle) {
+        btnThemeToggle.addEventListener('click', () => {
+            const active = document.documentElement.getAttribute('data-theme') || 'light';
+            const next = active === 'dark' ? 'light' : 'dark';
+            localStorage.setItem('pawtrack_theme', next);
+            applyTheme(next);
+        });
+    }
+
+    if (window.matchMedia) {
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+            if (!localStorage.getItem('pawtrack_theme')) {
+                applyTheme(e.matches ? 'dark' : 'light');
+            }
+        });
+    }
+
     try {
         const user = await account.get();
         CURRENT_USER = user.name;
@@ -1695,7 +1730,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
 
         document.getElementById('instructionOverlay').style.display = 'none';
-        document.getElementById('datingContentLayout').style.display = 'flex';
+        document.getElementById('datingContentLayout').style.display = 'grid';
         document.getElementById('treatCountDisplay').innerText = `${treatsLeft} Left`;
         updateRewindUI();
     }
@@ -2985,13 +3020,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         function appendChatMessageToStream(streamEl, text, type, timeStr) {
-            const b = document.createElement('div');
-            b.className = `stream-bubble bubble-${type}`;
-            b.innerHTML = `
-                <div class="bubble-text">${escapeHtml(text)}</div>
-                <div class="bubble-time">${timeStr}</div>
+            const row = document.createElement('div');
+            row.className = `stream-bubble-row row-${type}`;
+            row.innerHTML = `
+                <div class="stream-bubble bubble-${type}">
+                    <div class="bubble-text">${escapeHtml(text)}</div>
+                    <div class="bubble-time">${escapeHtml(timeStr || '')}</div>
+                </div>
             `;
-            streamEl.appendChild(b);
+            streamEl.appendChild(row);
         }
 
         searchInput.oninput = (e) => {
