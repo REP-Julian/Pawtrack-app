@@ -3427,6 +3427,78 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }, true);
 
+    // ==========================================
+    // SIDEBAR MINIMIZE / MAXIMIZE CONTROLLER
+    // ==========================================
+    function initSidebarToggle() {
+        const sidebar = document.querySelector('.sidebar');
+        const togglePill = document.getElementById('sidebarTogglePill');
+        const headerToggleBtn = document.getElementById('btnHeaderSidebarToggle');
+        const logoWrapper = document.getElementById('sidebarLogoWrapper');
+
+        if (!sidebar) return;
+
+        // Restore persisted user preference
+        const isCollapsed = localStorage.getItem('pawtrack_sidebar_collapsed') === 'true';
+        if (isCollapsed && window.innerWidth > 768) {
+            sidebar.classList.add('collapsed');
+            if (togglePill) {
+                togglePill.title = "Maximize sidebar";
+                togglePill.setAttribute('aria-label', 'Maximize sidebar');
+            }
+            if (headerToggleBtn) {
+                headerToggleBtn.title = "Maximize sidebar";
+            }
+        }
+
+        function toggleSidebar(forcedState = null) {
+            if (window.innerWidth <= 768) return;
+            const willCollapse = forcedState !== null ? forcedState : !sidebar.classList.contains('collapsed');
+            sidebar.classList.toggle('collapsed', willCollapse);
+            try {
+                localStorage.setItem('pawtrack_sidebar_collapsed', willCollapse ? 'true' : 'false');
+            } catch (e) {}
+
+            if (togglePill) {
+                togglePill.title = willCollapse ? "Maximize sidebar" : "Minimize sidebar";
+                togglePill.setAttribute('aria-label', willCollapse ? "Maximize sidebar" : "Minimize sidebar");
+            }
+            if (headerToggleBtn) {
+                headerToggleBtn.title = willCollapse ? "Maximize sidebar" : "Minimize sidebar";
+            }
+
+            // Dispatch resize so charts and spotlight smoothly recalibrate
+            setTimeout(() => {
+                window.dispatchEvent(new Event('resize'));
+            }, 310);
+        }
+
+        if (togglePill) {
+            togglePill.addEventListener('click', (e) => {
+                e.stopPropagation();
+                toggleSidebar();
+            });
+        }
+
+        if (headerToggleBtn) {
+            headerToggleBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                toggleSidebar();
+            });
+        }
+
+        // Clicking logo when minimized expands back to original form
+        if (logoWrapper) {
+            logoWrapper.addEventListener('click', () => {
+                if (sidebar.classList.contains('collapsed')) {
+                    toggleSidebar(false);
+                }
+            });
+        }
+    }
+
+    initSidebarToggle();
+
     // Check on startup
     checkFirstTimeUserTour();
 

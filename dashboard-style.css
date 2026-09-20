@@ -144,6 +144,40 @@ body {
     flex-shrink: 0;
     border-right: 1px solid rgba(255, 255, 255, 0.06);
     position: relative;
+    transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.sidebar-toggle-pill {
+    position: absolute;
+    right: -13px;
+    top: 36px;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: #1C2722;
+    border: 1.5px solid rgba(255, 255, 255, 0.2);
+    color: #CBD5E1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 25;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    font-size: 0.72rem;
+    padding: 0;
+}
+
+.sidebar-toggle-pill:hover {
+    background: var(--primary);
+    color: #FFFFFF;
+    border-color: var(--primary);
+    transform: scale(1.15);
+    box-shadow: 0 4px 16px var(--primary-glow);
+}
+
+.sidebar.collapsed .sidebar-toggle-pill i {
+    transform: rotate(180deg);
 }
 
 .sidebar-header {
@@ -282,6 +316,150 @@ body {
     color: #EF4444 !important;
 }
 
+/* --- MINIMIZED / COLLAPSED SIDEBAR STATE --- */
+.sidebar.collapsed {
+    width: 78px;
+}
+
+.sidebar.collapsed .sidebar-header {
+    padding: 24px 10px 18px;
+}
+
+.sidebar.collapsed .sidebar-header h3 {
+    display: none !important;
+    opacity: 0;
+    height: 0;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+}
+
+.sidebar.collapsed .sidebar-logo {
+    margin-bottom: 0;
+    cursor: pointer;
+}
+
+.sidebar.collapsed .sidebar-logo img {
+    width: 46px;
+    height: 46px;
+    border-width: 2px;
+}
+
+.sidebar.collapsed .sidebar-logo img:hover {
+    transform: scale(1.1);
+}
+
+.sidebar.collapsed .sidebar-nav {
+    padding: 18px 8px;
+    align-items: center;
+    overflow-x: hidden;
+}
+
+.sidebar.collapsed .nav-btn {
+    justify-content: center;
+    padding: 12px;
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+    gap: 0;
+}
+
+.sidebar.collapsed .nav-btn .nav-label {
+    display: none !important;
+}
+
+.sidebar.collapsed .nav-btn:hover {
+    transform: none;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.sidebar.collapsed .nav-btn.active::before {
+    left: 2px;
+    height: 22px;
+    width: 3.5px;
+}
+
+.sidebar.collapsed .sidebar-footer {
+    padding: 14px 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+.sidebar.collapsed .sidebar-footer .nav-btn {
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    padding: 12px;
+    gap: 0;
+}
+
+.sidebar.collapsed .sidebar-footer .nav-label {
+    display: none !important;
+}
+
+.sidebar.collapsed .sidebar-badge {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    font-size: 0.62rem;
+    min-width: 16px;
+    height: 16px;
+    padding: 0 4px;
+    line-height: 16px;
+}
+
+/* Tooltip on Hover for Collapsed Navigation */
+.sidebar.collapsed .nav-btn[data-tooltip]::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    left: calc(100% + 14px);
+    top: 50%;
+    transform: translateY(-50%);
+    background: #18221E;
+    color: #F8FAFC;
+    font-family: var(--font-body);
+    font-size: 0.82rem;
+    font-weight: 700;
+    padding: 7px 13px;
+    border-radius: 10px;
+    white-space: nowrap;
+    pointer-events: none;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    z-index: 1000;
+}
+
+.sidebar.collapsed .nav-btn[data-tooltip]::before {
+    content: '';
+    position: absolute;
+    left: calc(100% + 6px);
+    top: 50%;
+    transform: translateY(-50%);
+    border: 5px solid transparent;
+    border-right-color: #18221E;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s ease;
+    pointer-events: none;
+    z-index: 1000;
+}
+
+.sidebar.collapsed .nav-btn:hover[data-tooltip]::after {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(-50%) translateX(2px);
+}
+
+.sidebar.collapsed .nav-btn:hover[data-tooltip]::before {
+    opacity: 1;
+    visibility: visible;
+}
+
 /* --- 4. MAIN LAYOUT & HEADER --- */
 .main-wrapper {
     flex: 1;
@@ -291,6 +469,38 @@ body {
     overflow: hidden;
     position: relative;
     z-index: 1;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.btn-sidebar-toggle {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-full);
+    background: var(--surface-card);
+    border: 1px solid var(--border-medium);
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 0.95rem;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: var(--shadow-xs);
+    flex-shrink: 0;
+}
+
+.btn-sidebar-toggle:hover {
+    color: var(--primary);
+    border-color: var(--primary);
+    background: #FFFFFF;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 14px var(--primary-glow);
 }
 
 .dashboard-header {
@@ -4696,8 +4906,10 @@ body {
     }
 
     .sidebar-header, 
-    .sidebar-footer {
-        display: none;
+    .sidebar-footer,
+    .sidebar-toggle-pill,
+    .btn-sidebar-toggle {
+        display: none !important;
     }
 
     .sidebar-nav {
