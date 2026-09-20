@@ -210,14 +210,34 @@ document.addEventListener('DOMContentLoaded', async () => {
         messageEl.innerText = message;
         titleEl.className = isError ? 'custom-popup-title title-error' : 'custom-popup-title title-success';
         
-        actionsEl.style.display = 'none'; // Hide buttons for normal alerts
+        // Show a single "Okay" button
+        actionsEl.style.display = 'flex';
+        const cancelBtn = document.getElementById('btnPopupCancel');
+        const confirmBtn = document.getElementById('btnPopupConfirm');
+        cancelBtn.style.display = 'none';
+        confirmBtn.innerText = 'Okay';
+        confirmBtn.style.background = isError ? '#ef4444' : 'var(--sage, #2D6A4F)';
+        confirmBtn.style.boxShadow = isError ? '0 4px 10px rgba(239,68,68,0.3)' : '0 4px 10px rgba(45,106,79,0.3)';
+        confirmBtn.onclick = () => {
+            clearTimeout(popupTimer);
+            cancelBtn.style.display = '';
+            confirmBtn.innerText = "Yes, I'm sure";
+            confirmBtn.style.background = '#ef4444';
+            confirmBtn.style.boxShadow = '0 4px 10px rgba(239,68,68,0.3)';
+            closePopup(callback);
+        };
+
         overlay.style.display = 'flex';
 
         clearTimeout(popupTimer);
-        popupTimer = setTimeout(() => { closePopup(callback); }, 5000);
+        popupTimer = setTimeout(() => { closePopup(callback); }, 8000);
 
         document.getElementById('customPopupClose').onclick = () => {
             clearTimeout(popupTimer);
+            cancelBtn.style.display = '';
+            confirmBtn.innerText = "Yes, I'm sure";
+            confirmBtn.style.background = '#ef4444';
+            confirmBtn.style.boxShadow = '0 4px 10px rgba(239,68,68,0.3)';
             closePopup(callback);
         };
     }
