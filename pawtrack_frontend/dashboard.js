@@ -3039,4 +3039,334 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     });
 
+    // ==========================================
+    // INTERACTIVE ONBOARDING TOUR & TUTORIAL LOGIC
+    // ==========================================
+    const TOUR_STEPS = [
+        {
+            title: "Your Care Dashboard 🏠",
+            desc: "Welcome to PawTrack! From your Home dashboard, track registered pet counts, see active adoption statuses, review upcoming vet reminders, and get daily outdoor walk weather tips.",
+            icon: "fa-house",
+            targetSelector: ".sidebar-nav [data-target='home']",
+            tab: "home",
+            placement: "right"
+        },
+        {
+            title: "Live Adoption Board 🐾",
+            desc: "Browse companions looking for a loving home! When other users register a pet for adoption, it shows up here in real-time without reloading. Click 'Details' to view medical notes, or 'Adopt Now' to send a digital application.",
+            icon: "fa-paw",
+            targetSelector: ".sidebar-nav [data-target='pets']",
+            tab: "pets",
+            placement: "right"
+        },
+        {
+            title: "Register Your Own Pet 📸",
+            desc: "Add your furry family member with photo uploads to PawTrack Cloud Storage. Choose whether your companion is a private pet for health tracking or listed publicly for adoption.",
+            icon: "fa-plus-circle",
+            targetSelector: "#btnRegisterPet",
+            tab: null,
+            placement: "bottom"
+        },
+        {
+            title: "Pet Matchmaker & Playdates ❤️",
+            desc: "Find compatible playmates or breeding matches based on breed, age, and location. Give a Treat to express interest, or pass to browse more verified neighborhood companions.",
+            icon: "fa-heart",
+            targetSelector: ".sidebar-nav [data-target='breeding']",
+            tab: "breeding",
+            placement: "right"
+        },
+        {
+            title: "Verified Vet Appointments 🩺",
+            desc: "Book check-ups and medical visits with licensed veterinarians. Select your preferred clinic and time slot, and manage upcoming appointments in one place.",
+            icon: "fa-user-doctor",
+            targetSelector: ".sidebar-nav [data-target='vet']",
+            tab: "vet",
+            placement: "right"
+        },
+        {
+            title: "Real-Time Messages & Alerts 💬",
+            desc: "Chat directly with pet owners, caregivers, and adopters. Real-time notification toasts keep you updated the moment an application is approved or a new pet is posted!",
+            icon: "fa-comment-dots",
+            targetSelector: "#navMessagesBtn",
+            tab: "messages",
+            placement: "right"
+        }
+    ];
+
+    let currentTourIndex = 0;
+    let isTourActive = false;
+
+    function positionSpotlightAndCard(step) {
+        const overlay = document.getElementById('pawtrackTourOverlay');
+        const spotlight = document.getElementById('tourSpotlightBox');
+        const card = document.getElementById('tourCard');
+        if (!overlay || !spotlight || !card) return;
+
+        let targetEl = step.targetSelector ? document.querySelector(step.targetSelector) : null;
+
+        if (!targetEl || targetEl.offsetParent === null) {
+            spotlight.style.display = 'none';
+            card.style.top = '50%';
+            card.style.left = '50%';
+            card.style.transform = 'translate(-50%, -50%)';
+            return;
+        }
+
+        spotlight.style.display = 'block';
+        const rect = targetEl.getBoundingClientRect();
+        const padding = 8;
+
+        const top = Math.max(0, rect.top - padding);
+        const left = Math.max(0, rect.left - padding);
+        const width = rect.width + (padding * 2);
+        const height = rect.height + (padding * 2);
+
+        spotlight.style.top = `${top}px`;
+        spotlight.style.left = `${left}px`;
+        spotlight.style.width = `${width}px`;
+        spotlight.style.height = `${height}px`;
+
+        if (window.innerWidth <= 768) {
+            card.style.top = '';
+            card.style.left = '';
+            card.style.transform = '';
+            return;
+        }
+
+        card.style.transform = 'none';
+        const cardWidth = 390;
+        const cardHeight = card.offsetHeight || 220;
+        const margin = 18;
+
+        let cardTop, cardLeft;
+
+        if (step.placement === 'right') {
+            cardLeft = rect.right + margin;
+            cardTop = Math.max(20, rect.top + (rect.height / 2) - (cardHeight / 2));
+            if (cardLeft + cardWidth > window.innerWidth) {
+                cardLeft = Math.max(20, rect.left - cardWidth - margin);
+            }
+        } else if (step.placement === 'bottom') {
+            cardTop = rect.bottom + margin;
+            cardLeft = Math.max(20, Math.min(window.innerWidth - cardWidth - 20, rect.left + (rect.width / 2) - (cardWidth / 2)));
+            if (cardTop + cardHeight > window.innerHeight) {
+                cardTop = Math.max(20, rect.top - cardHeight - margin);
+            }
+        } else {
+            cardTop = Math.max(20, (window.innerHeight / 2) - (cardHeight / 2));
+            cardLeft = Math.max(20, (window.innerWidth / 2) - (cardWidth / 2));
+        }
+
+        cardTop = Math.min(Math.max(20, cardTop), window.innerHeight - cardHeight - 20);
+        cardLeft = Math.min(Math.max(20, cardLeft), window.innerWidth - cardWidth - 20);
+
+        card.style.top = `${cardTop}px`;
+        card.style.left = `${cardLeft}px`;
+    }
+
+    function renderTourStep(index) {
+        if (index < 0 || index >= TOUR_STEPS.length) {
+            endTour();
+            return;
+        }
+        currentTourIndex = index;
+        const step = TOUR_STEPS[index];
+
+        if (step.tab) {
+            const tabBtn = document.querySelector(`.sidebar-nav [data-target="${step.tab}"]`);
+            if (tabBtn && !tabBtn.classList.contains('active')) {
+                tabBtn.click();
+            }
+        }
+
+        const badge = document.getElementById('tourStepBadge');
+        const title = document.getElementById('tourStepTitle');
+        const desc = document.getElementById('tourStepDesc');
+        const iconBubble = document.getElementById('tourIconBubble');
+        const dotsContainer = document.getElementById('tourDots');
+        const prevBtn = document.getElementById('tourBtnPrev');
+        const nextBtn = document.getElementById('tourBtnNext');
+
+        if (badge) badge.innerText = `STEP ${index + 1} OF ${TOUR_STEPS.length}`;
+        if (title) title.innerText = step.title;
+        if (desc) desc.innerText = step.desc;
+        if (iconBubble) iconBubble.innerHTML = `<i class="fa-solid ${step.icon}"></i>`;
+
+        if (dotsContainer) {
+            dotsContainer.innerHTML = TOUR_STEPS.map((_, i) => 
+                `<div class="tour-dot ${i === index ? 'active' : ''}"></div>`
+            ).join('');
+        }
+
+        if (prevBtn) {
+            prevBtn.style.display = index > 0 ? 'inline-block' : 'none';
+        }
+
+        if (nextBtn) {
+            if (index === TOUR_STEPS.length - 1) {
+                nextBtn.innerHTML = `Finish Tour <i class="fa-solid fa-check"></i>`;
+            } else {
+                nextBtn.innerHTML = `Next <i class="fa-solid fa-arrow-right"></i>`;
+            }
+        }
+
+        setTimeout(() => {
+            positionSpotlightAndCard(step);
+        }, 120);
+    }
+
+    function startInteractiveTour(startIndex = 0) {
+        const welcomeModal = document.getElementById('tourWelcomeModal');
+        if (welcomeModal) welcomeModal.style.display = 'none';
+
+        const hiwModal = document.getElementById('howItWorksModal');
+        if (hiwModal) hiwModal.style.display = 'none';
+
+        const overlay = document.getElementById('pawtrackTourOverlay');
+        if (!overlay) return;
+        overlay.style.display = 'block';
+        isTourActive = true;
+
+        renderTourStep(startIndex);
+    }
+
+    function endTour(markCompleted = true) {
+        const overlay = document.getElementById('pawtrackTourOverlay');
+        if (overlay) overlay.style.display = 'none';
+        isTourActive = false;
+
+        if (markCompleted) {
+            try {
+                localStorage.setItem('pawtrack_tour_completed', 'true');
+            } catch (e) {}
+        }
+    }
+
+    function nextTourStep() {
+        if (currentTourIndex < TOUR_STEPS.length - 1) {
+            renderTourStep(currentTourIndex + 1);
+        } else {
+            endTour(true);
+            showRealtimeToast(
+                "Tour Complete! 🌟", 
+                "You're all set! Click 'Guide & Tour' anytime at the top of your screen to replay.", 
+                "fa-circle-check", 
+                null, 
+                "app"
+            );
+        }
+    }
+
+    function prevTourStep() {
+        if (currentTourIndex > 0) {
+            renderTourStep(currentTourIndex - 1);
+        }
+    }
+
+    function openHowItWorksGuide() {
+        const modal = document.getElementById('howItWorksModal');
+        if (modal) modal.style.display = 'flex';
+    }
+
+    function closeHowItWorksGuide() {
+        const modal = document.getElementById('howItWorksModal');
+        if (modal) modal.style.display = 'none';
+    }
+
+    function checkFirstTimeUserTour() {
+        try {
+            const completed = localStorage.getItem('pawtrack_tour_completed');
+            if (!completed) {
+                setTimeout(() => {
+                    const welcomeModal = document.getElementById('tourWelcomeModal');
+                    const welcomeHeading = document.getElementById('welcomeTourHeading');
+                    if (welcomeHeading && CURRENT_USER) {
+                        welcomeHeading.innerText = `Welcome, ${CURRENT_USER}! 👋`;
+                    }
+                    if (welcomeModal) welcomeModal.style.display = 'flex';
+                }, 1400);
+            }
+        } catch (e) {}
+    }
+
+    // Attach Tour and Guide listeners
+    const btnStartTour = document.getElementById('btnStartTour');
+    if (btnStartTour) {
+        btnStartTour.addEventListener('click', () => {
+            startInteractiveTour(0);
+        });
+    }
+
+    const btnSidebarTour = document.getElementById('btnSidebarTour');
+    if (btnSidebarTour) {
+        btnSidebarTour.addEventListener('click', () => {
+            openHowItWorksGuide();
+        });
+    }
+
+    const btnWelcomeTourStart = document.getElementById('btnWelcomeTourStart');
+    if (btnWelcomeTourStart) {
+        btnWelcomeTourStart.addEventListener('click', () => {
+            startInteractiveTour(0);
+        });
+    }
+
+    const btnWelcomeTourSkip = document.getElementById('btnWelcomeTourSkip');
+    if (btnWelcomeTourSkip) {
+        btnWelcomeTourSkip.addEventListener('click', () => {
+            const welcomeModal = document.getElementById('tourWelcomeModal');
+            if (welcomeModal) welcomeModal.style.display = 'none';
+            try {
+                localStorage.setItem('pawtrack_tour_completed', 'true');
+            } catch (e) {}
+        });
+    }
+
+    const tourBtnClose = document.getElementById('tourBtnClose');
+    if (tourBtnClose) tourBtnClose.addEventListener('click', () => endTour(true));
+
+    const tourBtnSkip = document.getElementById('tourBtnSkip');
+    if (tourBtnSkip) tourBtnSkip.addEventListener('click', () => endTour(true));
+
+    const tourBtnNext = document.getElementById('tourBtnNext');
+    if (tourBtnNext) tourBtnNext.addEventListener('click', nextTourStep);
+
+    const tourBtnPrev = document.getElementById('tourBtnPrev');
+    if (tourBtnPrev) tourBtnPrev.addEventListener('click', prevTourStep);
+
+    const btnHiwClose = document.getElementById('btnHiwClose');
+    if (btnHiwClose) btnHiwClose.addEventListener('click', closeHowItWorksGuide);
+
+    const btnHiwDismiss = document.getElementById('btnHiwDismiss');
+    if (btnHiwDismiss) btnHiwDismiss.addEventListener('click', closeHowItWorksGuide);
+
+    const btnHiwStartTour = document.getElementById('btnHiwStartInteractiveTour');
+    if (btnHiwStartTour) {
+        btnHiwStartTour.addEventListener('click', () => {
+            closeHowItWorksGuide();
+            startInteractiveTour(0);
+        });
+    }
+
+    // HIW Guide Modal Tabs
+    document.querySelectorAll('.hiw-tab-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('.hiw-tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.hiw-tab-content').forEach(c => c.classList.remove('active'));
+            this.classList.add('active');
+            const targetId = this.getAttribute('data-tab');
+            const targetEl = document.getElementById(targetId);
+            if (targetEl) targetEl.classList.add('active');
+        });
+    });
+
+    window.addEventListener('resize', () => {
+        if (isTourActive && TOUR_STEPS[currentTourIndex]) {
+            positionSpotlightAndCard(TOUR_STEPS[currentTourIndex]);
+        }
+    });
+
+    // Check on startup
+    checkFirstTimeUserTour();
+
 }); 
