@@ -914,25 +914,34 @@ document.addEventListener('DOMContentLoaded', async () => {
                 `;
             });
         } else {
-            myPetsListHTML = '<p style="padding: 15px; color: #64748b; font-size: 0.95rem; text-align: center; font-weight: bold;">You need to register a pet first to use the Match Maker!</p>';
+            myPetsListHTML = `
+                <div class="empty-pets-state">
+                    <div class="empty-pets-icon"><i class="fa-solid fa-paw"></i></div>
+                    <h4>No Registered Pets</h4>
+                    <p>Register your companion to begin scanning for verified matches and playdates.</p>
+                    <button class="btn-primary" id="btnMatchRegisterPet" style="margin-top: 14px; width: 100%; justify-content: center; font-size: 0.92rem; padding: 11px 18px;">
+                        <i class="fa-solid fa-plus"></i> Register a Pet
+                    </button>
+                </div>
+            `;
         }
 
         return `
         <div class="match-page-container">
-            <div class="page-header" style="margin-bottom: 15px;">
+            <div class="page-header" style="margin-bottom: 24px;">
                 <div>
-                    <h2><i class="fa-solid fa-heart" style="color: #ec4899;"></i> Premium Match Maker</h2>
+                    <h2><i class="fa-solid fa-heart" style="color: var(--primary);"></i> Premium Match Maker</h2>
                     <p>Find the perfect verified partner or schedule a local playdate.</p>
                 </div>
-                <div style="display: flex; gap: 15px;">
+                <div style="display: flex; gap: 14px;">
                     <button class="btn-animated" id="btnOpenPrefs"><i class="fa-solid fa-sliders"></i> Preferences</button>
-                    <button class="btn-animated" id="btnViewActivePairs" style="background: white; color: #ec4899; border: 2px solid #ec4899;"><i class="fa-solid fa-layer-group"></i> Match Dashboard</button>
+                    <button class="btn-animated" id="btnViewActivePairs" style="background: white; color: var(--primary); border: 2px solid var(--primary);"><i class="fa-solid fa-layer-group"></i> Match Dashboard</button>
                 </div>
             </div>
 
             <div class="match-module-grid">
                 <div class="glass-panel pets-list-panel">
-                    <h3 style="color: #0f172a; font-size: 1.2rem; font-weight: 900; margin-bottom: 15px; border-bottom: 2px solid rgba(0,0,0,0.05); padding-bottom: 10px;">Who is looking for love?</h3>
+                    <h3 class="panel-heading"><i class="fa-solid fa-paw"></i> Who is looking for love?</h3>
                     <div class="your-pets-selector">
                         ${myPetsListHTML}
                     </div>
@@ -949,7 +958,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                     <div class="instruction-overlay" id="instructionOverlay">
                         <div class="radar-container"><div class="radar-ring ring1"></div><div class="radar-ring ring2"></div><div class="radar-ring ring3"></div><div class="radar-center"><i class="fa-solid fa-satellite-dish"></i></div></div>
-                        <p>Select your pet on the left<br>to start scanning for nearby matches...</p>
+                        <p>${myPets.length > 0 ? 'Select your pet on the left<br>to start scanning for nearby matches...' : 'Register your pet on the left<br>to start scanning for nearby matches...'}</p>
                     </div>
 
                     <div class="dating-content-layout" id="datingContentLayout" style="display:none;">
@@ -1434,6 +1443,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             this.classList.add('active');
             const target = this.getAttribute('data-target');
 
+            mainDisplayPanel.scrollTo({ top: 0, behavior: 'smooth' });
+
             if (target === 'home') loadHome();
             else if (target === 'pets') mainDisplayPanel.innerHTML = availablePetsHTML;
            else if (target === 'applications') mainDisplayPanel.innerHTML = renderMyApplicationsHTML();
@@ -1453,12 +1464,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     // 6. TOP BAR ACTIONS
     document.getElementById('btnViewProfile').addEventListener('click', () => {
         navButtons.forEach(b => b.classList.remove('active'));
+        mainDisplayPanel.scrollTo({ top: 0, behavior: 'smooth' });
         mainDisplayPanel.innerHTML = profileHTML;
         populateProfileHub();
     });
 
     document.getElementById('btnRegisterPet').addEventListener('click', () => {
         navButtons.forEach(b => b.classList.remove('active'));
+        mainDisplayPanel.scrollTo({ top: 0, behavior: 'smooth' });
         mainDisplayPanel.innerHTML = registerPetHTML;
 
         const dropZone = document.getElementById('imageDropZone');
@@ -1491,6 +1504,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // 7. EVENT DELEGATION
         mainDisplayPanel.addEventListener('click', async (e) => {
+            const btnMatchReg = e.target.closest('#btnMatchRegisterPet');
+            if (btnMatchReg) {
+                document.getElementById('btnRegisterPet').click();
+                return;
+            }
 
             // --- PROFILE TABS LOGIC ---
             if (e.target.classList.contains('profile-tab-btn')) {
