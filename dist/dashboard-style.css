@@ -640,7 +640,7 @@ body {
 .btn-sidebar-toggle:hover {
     color: var(--primary);
     border-color: var(--primary);
-    background: #FFFFFF;
+    background: var(--surface-card-subtle);
     transform: translateY(-1px);
     box-shadow: 0 4px 14px var(--primary-glow);
 }
@@ -6812,12 +6812,30 @@ body {
 [data-theme="dark"] .pawtrack-toast-card,
 [data-theme="dark"] .messenger-chat-panel,
 [data-theme="dark"] .chat-pane-header,
-[data-theme="dark"] .chat-pane-input-bar,
-[data-theme="dark"] .sidebar-logo,
-[data-theme="dark"] .header-actions {
+[data-theme="dark"] .chat-pane-input-bar {
     background: var(--surface-card);
     color: var(--text-main);
     border-color: var(--border-medium);
+}
+
+/* Ensure layout containers never receive unwanted square box backgrounds */
+.sidebar-logo,
+[data-theme="dark"] .sidebar-logo,
+.header-actions,
+[data-theme="dark"] .header-actions {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+.search-bar input,
+.search-bar input:focus,
+[data-theme="dark"] .search-bar input,
+[data-theme="dark"] .search-bar input:focus {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    outline: none !important;
 }
 
 [data-theme="dark"] .hiw-header,
@@ -6897,7 +6915,6 @@ body {
 [data-theme="dark"] .reg-input select,
 [data-theme="dark"] .reg-input textarea,
 [data-theme="dark"] .shop-select,
-[data-theme="dark"] .search-bar input,
 [data-theme="dark"] .custom-prompt-input {
     background: var(--surface-card-subtle);
     color: var(--text-main);
@@ -6909,7 +6926,6 @@ body {
 [data-theme="dark"] .reg-input select:focus,
 [data-theme="dark"] .reg-input textarea:focus,
 [data-theme="dark"] .shop-select:focus,
-[data-theme="dark"] .search-bar input:focus,
 [data-theme="dark"] .custom-prompt-input:focus {
     background: var(--surface-elevated);
     color: var(--text-main);
