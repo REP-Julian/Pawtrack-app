@@ -1,4 +1,4 @@
-import { account, databases, storage } from './appwrite.js';
+import { client, account, databases, storage } from './appwrite.js';
 import { Query, ID } from 'appwrite';
 
 // Appwrite Configuration
@@ -215,79 +215,84 @@ document.addEventListener('DOMContentLoaded', async () => {
         </div>
     `;
 
-    // --- DYNAMIC DATABASE LOOP (MEET THE PETS) ---
-    let petGridContent = "";
+    // --- DYNAMIC DATABASE FUNCTION (MEET THE PETS) ---
+    function renderAvailablePetsHTML() {
+        let petGridContent = "";
 
-    if (typeof REAL_DB_PETS !== 'undefined' && REAL_DB_PETS.length > 0) {
-        // ---> FIXED: Exclude Private pets from the public adoption board!
-        const publicPets = REAL_DB_PETS.filter(p => p.status === 'Available');
-        
-        if (publicPets.length > 0) {
-            publicPets.forEach(pet => {
-                const genderClass = pet.gender === 'Female' ? 'gender-female' : 'gender-male';
-                
-                const isOwner = pet.owner === CURRENT_USER;
-                const deleteButtonHTML = isOwner ? `
-                    <button class="btn-archive-pet" data-petid="${pet.id}" title="Move to Bin" 
-                        style="background: #fee2e2; color: #ef4444; border: 2px solid #fca5a5; border-radius: 10px; padding: 10px; cursor: pointer; transition: 0.3s;">
-                        <i class="fa-solid fa-trash-can"></i>
-                    </button>
-                ` : '';
+        if (typeof REAL_DB_PETS !== 'undefined' && REAL_DB_PETS.length > 0) {
+            // Exclude Private pets from the public adoption board
+            const publicPets = REAL_DB_PETS.filter(p => p.status === 'Available');
+            
+            if (publicPets.length > 0) {
+                publicPets.forEach(pet => {
+                    const genderClass = pet.gender === 'Female' ? 'gender-female' : 'gender-male';
+                    
+                    const isOwner = pet.owner === CURRENT_USER;
+                    const deleteButtonHTML = isOwner ? `
+                        <button class="btn-archive-pet" data-petid="${pet.id}" title="Move to Bin" 
+                            style="background: #fee2e2; color: #ef4444; border: 2px solid #fca5a5; border-radius: 10px; padding: 10px; cursor: pointer; transition: 0.3s;">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                    ` : '';
 
-                petGridContent += `
-                    <div class="pet-item-wrapper">
-                        <div class="pet-card ${genderClass}">
-                            <img src="${pet.img}" alt="${pet.name}" class="pet-card-img">
-                            <div class="pet-card-body">
-                                <h3 class="pet-name">${pet.name}</h3>
-                                <p class="pet-breed">${pet.breed}</p>
-                                <p class="pet-meta">${pet.gender} • ${pet.age}</p>
-                                <span class="status-badge">● ${pet.status}</span>
-                                
-                                <div class="pet-actions" style="display: flex; gap: 8px;">
-                                    <button class="btn-view-pet" data-target="pet-details-${pet.id}" title="View Details" style="flex: 1;">
-                                        Details <i class="fa-solid fa-chevron-down"></i>
-                                    </button>
+                    const petImgSrc = pet.img || 'https://images.unsplash.com/photo-1543466835-00a7907e9de1?auto=format&fit=crop&w=600&q=80';
+
+                    petGridContent += `
+                        <div class="pet-item-wrapper">
+                            <div class="pet-card ${genderClass}">
+                                <img src="${petImgSrc}" alt="${pet.name}" class="pet-card-img">
+                                <div class="pet-card-body">
+                                    <h3 class="pet-name">${pet.name}</h3>
+                                    <p class="pet-breed">${pet.breed}</p>
+                                    <p class="pet-meta">${pet.gender} • ${pet.age}</p>
+                                    <span class="status-badge">● ${pet.status}</span>
                                     
-                                    ${deleteButtonHTML}
+                                    <div class="pet-actions" style="display: flex; gap: 8px;">
+                                        <button class="btn-view-pet" data-target="pet-details-${pet.id}" title="View Details" style="flex: 1;">
+                                            Details <i class="fa-solid fa-chevron-down"></i>
+                                        </button>
+                                        
+                                        ${deleteButtonHTML}
 
-                                    <button class="btn-adopt" data-petid="${pet.id}" data-petname="${pet.name}" style="flex: 1;">Adopt Now</button>
+                                        <button class="btn-adopt" data-petid="${pet.id}" data-petname="${pet.name}" style="flex: 1;">Adopt Now</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="pet-details-dropdown ${genderClass}" id="pet-details-${pet.id}">
+                                <div class="details-grid">
+                                    <div class="detail-box"><label>Health Status</label><p>${pet.health_status || 'Healthy'}</p></div>
+                                    <div class="detail-box"><label>Contact / Owner</label><p>@${pet.owner || 'PawTrack Caregiver'} <br><span style="font-size:0.85rem;">${pet.contact_number || '0917-000-0000'}</span></p></div>
+                                </div>
+                                <div class="detail-box" style="margin-bottom: 15px;">
+                                    <label>Personality Traits</label><p>${pet.personal_traits || 'Friendly and loving companion'}</p>
+                                </div>
+                                <div class="detail-box" style="margin-bottom: 25px;">
+                                    <label>Background / Reason for Adoption</label><p>${pet.reason_for_adoption || 'Looking for a warm forever family.'}</p>
+                                </div>
+                                <div style="text-align: right;">
+                                    <button class="btn-close-pet" data-target="pet-details-${pet.id}">Close Details</button>
                                 </div>
                             </div>
                         </div>
-                        <div class="pet-details-dropdown ${genderClass}" id="pet-details-${pet.id}">
-                            <div class="details-grid">
-                                <div class="detail-box"><label>Health Status</label><p>${pet.health_status}</p></div>
-                                <div class="detail-box"><label>Contact / Owner</label><p>@${pet.owner} <br><span style="font-size:0.85rem;">${pet.contact_number}</span></p></div>
-                            </div>
-                            <div class="detail-box" style="margin-bottom: 15px;">
-                                <label>Personality Traits</label><p>${pet.personal_traits}</p>
-                            </div>
-                            <div class="detail-box" style="margin-bottom: 25px;">
-                                <label>Background / Reason for Adoption</label><p>${pet.reason_for_adoption}</p>
-                            </div>
-                            <div style="text-align: right;">
-                                <button class="btn-close-pet" data-target="pet-details-${pet.id}">Close Details</button>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            });
+                    `;
+                });
+            } else {
+                petGridContent = `<p style="text-align:center; grid-column: 1/-1; color:#64748b; font-weight:bold; margin-top: 30px;">There are no pets currently available for adoption.</p>`;
+            }
         } else {
-            petGridContent = `<p style="text-align:center; grid-column: 1/-1; color:#64748b; font-weight:bold; margin-top: 30px;">There are no pets currently available for adoption.</p>`;
+            petGridContent = `<p style="text-align:center; grid-column: 1/-1; color:#64748b; font-weight:bold; margin-top: 30px;">There are no pets currently available in the system.</p>`;
         }
-    } else {
-        petGridContent = `<p style="text-align:center; grid-column: 1/-1; color:#64748b; font-weight:bold; margin-top: 30px;">There are no pets currently available in the system.</p>`;
-    }
 
-    const availablePetsHTML = `
-        <div class="page-container">
-            ${getPageHeader("Meet the Pets", "Say hello to our furry friends currently waiting for a loving home.", "fa-solid fa-paw")}
-            <div class="pet-grid">
-                ${petGridContent}
+        return `
+            <div class="page-container">
+                ${getPageHeader("Meet the Pets", "Say hello to our furry friends currently waiting for a loving home.", "fa-solid fa-paw")}
+                <div class="pet-grid">
+                    ${petGridContent}
+                </div>
             </div>
-        </div>
-    `;
+        `;
+    }
+    const availablePetsHTML = renderAvailablePetsHTML;
     function renderMyApplicationsHTML() {
         let inReviewCards = '';
         let approvedCards = '';
@@ -787,13 +792,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     function renderPetShopHTML() {
         return `
-            <div class="shop-layout" style="display: grid; grid-template-columns: 260px 1fr; gap: 30px; padding: 20px;">
-                <div class="shop-sidebar glass-panel" style="align-self: start; padding: 25px;">
-                    <h3 style="margin-bottom: 25px; color: #0f172a; font-size: 1.3rem;"><i class="fa-solid fa-sliders"></i> Filters</h3>
+            <div class="shop-layout">
+                <div class="shop-sidebar glass-panel">
+                    <h3 class="shop-sidebar-title"><i class="fa-solid fa-sliders"></i> Filters</h3>
                     
                     <div class="filter-group">
-                        <label class="filter-title" style="display: block; font-size: 0.85rem; color: #64748b; font-weight: bold; margin-bottom: 10px;">CATEGORY</label>
-                        <select id="shopCategoryFilter" class="shop-select" style="width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; color: #1e293b; background: white; outline: none; font-size: 1rem;">
+                        <label class="filter-title">CATEGORY</label>
+                        <select id="shopCategoryFilter" class="shop-select">
                             <option value="All Categories">All Categories</option>
                             <option value="Dog Food & Treats">Dog Food & Treats</option>
                             <option value="Cat Food">Cat Food</option>
@@ -803,31 +808,29 @@ document.addEventListener('DOMContentLoaded', async () => {
                         </select>
                     </div>
 
-                    <div class="filter-group" style="margin-top: 30px;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                            <label class="filter-title" style="font-size: 0.85rem; color: #64748b; font-weight: bold;">MAX PRICE</label>
-                            <span id="shopPriceDisplay" style="font-size: 0.9rem; font-weight: bold; color: #ec4899;">₱1000</span>
+                    <div class="filter-group" style="margin-top: 24px;">
+                        <div class="filter-price-header">
+                            <label class="filter-title">MAX PRICE</label>
+                            <span id="shopPriceDisplay" class="filter-price-badge">₱1000</span>
                         </div>
-                        <input type="range" id="shopPriceFilter" min="50" max="1000" step="10" value="1000" style="width: 100%; accent-color: #ec4899;">
-                        <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: #94a3b8; margin-top: 5px; font-weight: bold;"><span>₱50</span><span>₱1,000</span></div>
+                        <input type="range" id="shopPriceFilter" min="50" max="1000" step="10" value="1000" class="custom-range-slider">
+                        <div class="range-scale"><span>₱50</span><span>₱1,000</span></div>
                     </div>
                 </div>
 
                 <div class="shop-main">
-                    <div class="shop-banner" style="background: linear-gradient(135deg, #a855f7, #ec4899); border-radius: 16px; padding: 35px 40px; color: white; display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; box-shadow: 0 10px 25px rgba(236, 72, 153, 0.3);">
+                    <div class="shop-banner">
                         <div>
-                            <h2 style="font-size: 2.2rem; margin: 0 0 10px 0; font-weight: 900;">PawShop Marketplace</h2>
-                            <p style="margin: 0; font-size: 1.1rem; opacity: 0.9;">Discover premium quality products for your beloved pets.</p>
+                            <h1>PawShop Marketplace</h1>
+                            <p>Discover premium quality nutrition, accessories, and toys for your beloved pets.</p>
                         </div>
-                        <div>
-                            <button class="btn-cart" id="btnOpenCart" style="background: white; color: #ec4899; border: none; padding: 15px 30px; border-radius: 30px; font-weight: bold; font-size: 1.1rem; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.15); display: flex; align-items: center; gap: 10px; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
-                                <i class="fa-solid fa-cart-shopping"></i> View Cart 
-                                <span class="cart-count" id="cartBadge" style="background: #ef4444; color: white; padding: 3px 10px; border-radius: 12px; font-size: 0.85rem;">0</span>
-                            </button>
-                        </div>
+                        <button class="btn-cart" id="btnOpenCart">
+                            <i class="fa-solid fa-cart-shopping"></i> View Cart 
+                            <span class="cart-count" id="cartBadge">0</span>
+                        </button>
                     </div>
                     
-                    <div id="shopGridContainer" class="product-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 25px;">
+                    <div id="shopGridContainer" class="product-grid">
                         ${renderShopGrid(SHOP_ITEMS)}
                     </div>
                 </div>
@@ -1272,6 +1275,280 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Call it immediately on page load
     loadHome();
 
+    // ==========================================
+    // REALTIME APPWRITE SUBSCRIPTION & TOASTS
+    // ==========================================
+    function getOrCreateToastContainer() {
+        let container = document.getElementById('pawtrackToastContainer');
+        if (!container) {
+            container = document.createElement('div');
+            container.id = 'pawtrackToastContainer';
+            container.className = 'pawtrack-toast-container';
+            document.body.appendChild(container);
+        }
+        return container;
+    }
+
+    function showRealtimeToast(title, message, iconClass = 'fa-paw', targetTab = null, variant = 'default') {
+        const container = getOrCreateToastContainer();
+        const toast = document.createElement('div');
+        toast.className = `pawtrack-toast-card ${variant === 'app' ? 'toast-app' : variant === 'info' ? 'toast-info' : ''}`;
+        
+        toast.innerHTML = `
+            <div class="toast-icon-bubble">
+                <i class="fa-solid ${iconClass}"></i>
+            </div>
+            <div class="toast-body">
+                <div class="toast-title">
+                    <span>${escapeHtml(title)}</span>
+                </div>
+                <p class="toast-msg">${escapeHtml(message)}</p>
+            </div>
+            <button class="toast-close" title="Dismiss">&times;</button>
+        `;
+
+        const closeBtn = toast.querySelector('.toast-close');
+        let dismissTimer = null;
+
+        const dismiss = (e) => {
+            if (e) e.stopPropagation();
+            if (dismissTimer) clearTimeout(dismissTimer);
+            toast.style.animation = 'toastSlideOut 0.25s forwards';
+            setTimeout(() => {
+                if (toast.parentElement) toast.parentElement.removeChild(toast);
+            }, 250);
+        };
+
+        closeBtn.addEventListener('click', dismiss);
+
+        if (targetTab) {
+            toast.addEventListener('click', () => {
+                dismiss();
+                const targetBtn = document.querySelector(`.sidebar-nav .nav-btn[data-target="${targetTab}"]`);
+                if (targetBtn) {
+                    targetBtn.click();
+                } else if (targetTab === 'pets') {
+                    navButtons.forEach(b => b.classList.remove('active'));
+                    const petsBtn = document.querySelector('[data-target="pets"]');
+                    if (petsBtn) petsBtn.classList.add('active');
+                    mainDisplayPanel.innerHTML = renderAvailablePetsHTML();
+                } else if (targetTab === 'applications') {
+                    navButtons.forEach(b => b.classList.remove('active'));
+                    const appBtn = document.querySelector('[data-target="applications"]');
+                    if (appBtn) appBtn.classList.add('active');
+                    mainDisplayPanel.innerHTML = renderMyApplicationsHTML();
+                }
+            });
+        }
+
+        container.appendChild(toast);
+        dismissTimer = setTimeout(dismiss, 7000);
+    }
+
+    function getActiveTab() {
+        if (document.getElementById('adoptionApplicationForm')) return 'adopt-form';
+        if (document.getElementById('petRegistrationForm') || document.getElementById('registerPetForm')) return 'register-pet';
+        if (document.getElementById('profileFullName') || document.querySelector('.profile-container')) return 'profile';
+        const activeBtn = document.querySelector('.sidebar-nav .nav-btn.active');
+        return activeBtn ? activeBtn.getAttribute('data-target') : 'home';
+    }
+
+    function refreshCurrentView() {
+        const tab = getActiveTab();
+        if (tab === 'home') {
+            loadHome();
+        } else if (tab === 'pets') {
+            mainDisplayPanel.innerHTML = renderAvailablePetsHTML();
+        } else if (tab === 'applications') {
+            mainDisplayPanel.innerHTML = renderMyApplicationsHTML();
+        } else if (tab === 'profile') {
+            populateProfileHub();
+        } else if (tab === 'breeding') {
+            if (typeof renderMatchMakerHTML === 'function' && !document.getElementById('matchDetailsOverlay')) {
+                mainDisplayPanel.innerHTML = renderMatchMakerHTML();
+            }
+        }
+    }
+
+    function handleRealtimeEvent(response) {
+        if (!response || !response.payload) return;
+        const events = response.events || [];
+        const doc = response.payload;
+        const isCreate = events.some(e => e.includes('.create'));
+        const isUpdate = events.some(e => e.includes('.update'));
+        const isDelete = events.some(e => e.includes('.delete'));
+
+        // Handle PETS collection
+        if (doc.$collectionId === COLL_PETS || events.some(e => e.includes(`.${COLL_PETS}.`))) {
+            const petId = doc.$id;
+            const petData = { ...doc, id: doc.$id };
+
+            if (isDelete) {
+                const existed = REAL_DB_PETS.find(p => p.id === petId);
+                REAL_DB_PETS = REAL_DB_PETS.filter(p => p.id !== petId);
+                if (existed && existed.status === 'Available' && existed.owner !== CURRENT_USER) {
+                    showRealtimeToast("Pet Removed", `${existed.name} is no longer listed for adoption.`, "fa-paw", "pets", "info");
+                }
+            } else if (isCreate) {
+                const idx = REAL_DB_PETS.findIndex(p => p.id === petId);
+                if (idx === -1) {
+                    REAL_DB_PETS.unshift(petData);
+                } else {
+                    REAL_DB_PETS[idx] = petData;
+                }
+
+                // If another user listed this pet for adoption, notify in real time!
+                if (petData.status === 'Available' && petData.owner !== CURRENT_USER) {
+                    showRealtimeToast(
+                        "New Pet for Adoption! 🐾",
+                        `@${petData.owner || 'A caregiver'} just listed ${petData.name} (${petData.breed || 'Pet'}). Tap to meet them!`,
+                        "fa-heart",
+                        "pets",
+                        "default"
+                    );
+                }
+            } else if (isUpdate) {
+                const idx = REAL_DB_PETS.findIndex(p => p.id === petId);
+                const oldPet = idx !== -1 ? REAL_DB_PETS[idx] : null;
+                if (idx !== -1) {
+                    REAL_DB_PETS[idx] = petData;
+                } else {
+                    REAL_DB_PETS.unshift(petData);
+                }
+
+                if (petData.owner !== CURRENT_USER) {
+                    if (oldPet && oldPet.status !== 'Available' && petData.status === 'Available') {
+                        showRealtimeToast(
+                            "Pet Available for Adoption! 🐾",
+                            `${petData.name} (${petData.breed}) is now available for adoption! Tap to view.`,
+                            "fa-heart",
+                            "pets",
+                            "default"
+                        );
+                    } else if (oldPet && oldPet.status === 'Available' && petData.status !== 'Available') {
+                        showRealtimeToast(
+                            "Pet Status Updated",
+                            `${petData.name} is now ${petData.status}.`,
+                            "fa-paw",
+                            "pets",
+                            "info"
+                        );
+                    }
+                }
+            }
+
+            refreshCurrentView();
+        }
+
+        // Handle APPLICATIONS collection
+        if (doc.$collectionId === COLL_APPS || events.some(e => e.includes(`.${COLL_APPS}.`))) {
+            const appId = doc.$id;
+            const appData = { ...doc, id: doc.$id };
+
+            // Only act if this is the current user's application
+            if (appData.user_id === CURRENT_USER_ID) {
+                if (isDelete) {
+                    USER_APPS = USER_APPS.filter(a => a.id !== appId);
+                } else if (isCreate) {
+                    const idx = USER_APPS.findIndex(a => a.id === appId);
+                    if (idx === -1) {
+                        USER_APPS.unshift(appData);
+                    } else {
+                        USER_APPS[idx] = appData;
+                    }
+                } else if (isUpdate) {
+                    const idx = USER_APPS.findIndex(a => a.id === appId);
+                    const oldStatus = idx !== -1 ? USER_APPS[idx].status : '';
+                    if (idx !== -1) {
+                        USER_APPS[idx] = appData;
+                    } else {
+                        USER_APPS.unshift(appData);
+                    }
+
+                    if (oldStatus !== appData.status) {
+                        const isApproved = appData.status === 'Approved';
+                        showRealtimeToast(
+                            isApproved ? "🎉 Application Approved!" : "Application Status Updated",
+                            `Your adoption application for ${appData.pet_name} is now: ${appData.status}!`,
+                            isApproved ? "fa-circle-check" : "fa-clock",
+                            "applications",
+                            "app"
+                        );
+                    }
+                }
+                refreshCurrentView();
+            }
+        }
+    }
+
+    let isPollingSync = false;
+    async function pollDatabaseSync() {
+        if (isPollingSync) return;
+        isPollingSync = true;
+        try {
+            const petsRes = await databases.listDocuments(DB_ID, COLL_PETS);
+            const latestPets = petsRes.documents.map(d => ({ ...d, id: d.$id }));
+            
+            const oldIds = new Set(REAL_DB_PETS.map(p => p.id));
+            const newlyAddedPets = latestPets.filter(p => !oldIds.has(p.id) && p.status === 'Available' && p.owner !== CURRENT_USER);
+            
+            const petsChanged = latestPets.length !== REAL_DB_PETS.length || 
+                latestPets.some((p, i) => REAL_DB_PETS[i]?.id !== p.id || REAL_DB_PETS[i]?.status !== p.status);
+
+            if (petsChanged) {
+                REAL_DB_PETS = latestPets;
+                if (newlyAddedPets.length > 0) {
+                    const p = newlyAddedPets[0];
+                    showRealtimeToast(
+                        "New Pet for Adoption! 🐾",
+                        `@${p.owner || 'A caregiver'} just listed ${p.name} (${p.breed || 'Pet'}). Tap to meet them!`,
+                        "fa-heart",
+                        "pets",
+                        "default"
+                    );
+                }
+                refreshCurrentView();
+            }
+
+            if (CURRENT_USER_ID) {
+                const appsRes = await databases.listDocuments(DB_ID, COLL_APPS, [
+                    Query.equal('user_id', CURRENT_USER_ID)
+                ]);
+                const latestApps = appsRes.documents.map(d => ({ ...d, id: d.$id }));
+                const appsChanged = latestApps.length !== USER_APPS.length ||
+                    latestApps.some((a, i) => USER_APPS[i]?.id !== a.id || USER_APPS[i]?.status !== a.status);
+                if (appsChanged) {
+                    USER_APPS = latestApps;
+                    refreshCurrentView();
+                }
+            }
+        } catch (e) {
+            // Silently catch background poll errors
+        } finally {
+            isPollingSync = false;
+        }
+    }
+
+    function initRealtimeSync() {
+        try {
+            if (client && typeof client.subscribe === 'function') {
+                const channelPets = `databases.${DB_ID}.collections.${COLL_PETS}.documents`;
+                const channelApps = `databases.${DB_ID}.collections.${COLL_APPS}.documents`;
+                client.subscribe([channelPets, channelApps], (response) => {
+                    handleRealtimeEvent(response);
+                });
+                console.log("PawTrack: Appwrite Realtime connected for live adoption sync.");
+            }
+        } catch (err) {
+            console.warn("Realtime subscription fallback to polling:", err);
+        }
+
+        // Active background synchronization interval (every 8s)
+        setInterval(pollDatabaseSync, 8000);
+    }
+
+    initRealtimeSync();
+
     function updateVetCardUI() {
         const doc = doctorsDB[currentVetIndex];
         const initialsEl = document.getElementById('vetInitials');
@@ -1449,7 +1726,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             mainDisplayPanel.scrollTo({ top: 0, behavior: 'smooth' });
 
             if (target === 'home') loadHome();
-            else if (target === 'pets') mainDisplayPanel.innerHTML = availablePetsHTML;
+            else if (target === 'pets') mainDisplayPanel.innerHTML = renderAvailablePetsHTML();
            else if (target === 'applications') mainDisplayPanel.innerHTML = renderMyApplicationsHTML();
            else if (target === 'vet') {
                 mainDisplayPanel.innerHTML = renderVetAppointmentsHTML();
@@ -1565,7 +1842,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         if (e.target.closest('#btnBackToPets')) {
-            mainDisplayPanel.innerHTML = availablePetsHTML;
+            mainDisplayPanel.innerHTML = renderAvailablePetsHTML();
         }
 
         if (e.target.closest('.btn-edit-profile')) {
@@ -1583,7 +1860,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     return;
                 }
                 try {
-                    await databases.createDocument(DB_ID, COLL_BIN, ID.unique(), {
+                    const binDoc = await databases.createDocument(DB_ID, COLL_BIN, ID.unique(), {
                         name: pet.name,
                         breed: pet.breed,
                         gender: pet.gender,
@@ -1591,9 +1868,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                         img: pet.img || ''
                     });
                     await databases.deleteDocument(DB_ID, COLL_PETS, petId);
+                    REAL_DB_PETS = REAL_DB_PETS.filter(p => p.id !== petId);
+                    BIN_PETS.unshift({ ...binDoc, id: binDoc.$id });
                     await addActivityLog('Moved a pet to the Recycle Bin', pet.name, 'fa-trash-can');
                     showCustomPopup("Moved to Bin", "Pet successfully moved to Recycle Bin.", false, () => {
-                        window.location.reload(); 
+                        refreshCurrentView();
                     });
                 } catch(err) {
                     console.error("Appwrite Move to Bin Error:", err);
@@ -1614,9 +1893,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                     for (const bPet of BIN_PETS) {
                         await databases.deleteDocument(DB_ID, COLL_BIN, bPet.id);
                     }
+                    BIN_PETS = [];
                     await addActivityLog('Permanently emptied the Recycle Bin', '', 'fa-dumpster-fire');
                     showCustomPopup("Bin Emptied", "Recycle bin emptied successfully.", false, () => {
-                        window.location.reload();
+                        mainDisplayPanel.innerHTML = renderRecycleBinHTML();
                     });
                 } catch(err) {
                     console.error("Appwrite Empty Bin Error:", err);
@@ -1636,7 +1916,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const pet = BIN_PETS.find(p => p.id === petId);
             if (pet) {
                 try {
-                    await databases.createDocument(DB_ID, COLL_PETS, ID.unique(), {
+                    const restoredDoc = await databases.createDocument(DB_ID, COLL_PETS, ID.unique(), {
                         name: pet.name,
                         breed: pet.breed,
                         gender: pet.gender,
@@ -1650,9 +1930,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                         img: pet.img || ''
                     });
                     await databases.deleteDocument(DB_ID, COLL_BIN, petId);
+                    BIN_PETS = BIN_PETS.filter(p => p.id !== petId);
+                    REAL_DB_PETS.unshift({ ...restoredDoc, id: restoredDoc.$id });
                     await addActivityLog('Restored a pet from the Recycle Bin', pet.name, 'fa-rotate-left');
                     showCustomPopup("Restored!", "Pet has been restored to the active board!", false, () => {
-                        window.location.reload();
+                        mainDisplayPanel.innerHTML = renderRecycleBinHTML();
                     });
                 } catch(err) {
                     console.error("Appwrite Restore Error:", err);
@@ -1671,9 +1953,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                 async () => {
                     try {
                         await databases.deleteDocument(DB_ID, COLL_APPS, appId);
+                        USER_APPS = USER_APPS.filter(a => a.id !== appId);
                         await addActivityLog('Cancelled adoption application', '', 'fa-file-circle-xmark');
                         showCustomPopup("Cancelled", "Application successfully cancelled.", false, () => {
-                            window.location.reload();
+                            mainDisplayPanel.innerHTML = renderMyApplicationsHTML();
                         });
                     } catch(err) {
                         console.error("Appwrite Cancel App Error:", err);
@@ -1693,9 +1976,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                 async () => {
                     try {
                         await databases.deleteDocument(DB_ID, COLL_VET, appId);
+                        USER_VET_APPS = USER_VET_APPS.filter(a => a.id !== appId);
                         await addActivityLog('Cancelled veterinary appointment', '', 'fa-calendar-xmark');
                         showCustomPopup("Cancelled", "Appointment successfully cancelled.", false, () => {
-                            window.location.reload();
+                            mainDisplayPanel.innerHTML = renderVetAppointmentsHTML();
+                            updateVetCardUI();
                         });
                     } catch(err) {
                         console.error("Appwrite Cancel Vet Error:", err);
@@ -2034,7 +2319,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             (async () => {
                 try {
-                    await databases.createDocument(DB_ID, COLL_VET, ID.unique(), {
+                    const createdVetDoc = await databases.createDocument(DB_ID, COLL_VET, ID.unique(), {
                         pet_name: petNameText,
                         vet_name: vetNameText,
                         status: 'Upcoming',
@@ -2044,9 +2329,15 @@ document.addEventListener('DOMContentLoaded', async () => {
                         img: petObj?.img || ''
                     });
 
+                    USER_VET_APPS.unshift({ ...createdVetDoc, id: createdVetDoc.$id });
                     await addActivityLog('Booked vet visit for', petNameText, 'fa-user-doctor');
                     showCustomPopup("Request Sent!", "Appointment scheduled successfully! It is now Upcoming.", false, () => {
-                        window.location.reload();
+                        const vetBtn = document.querySelector('[data-target="vet"]');
+                        if (vetBtn) vetBtn.click();
+                        else {
+                            mainDisplayPanel.innerHTML = renderVetAppointmentsHTML();
+                            updateVetCardUI();
+                        }
                     });
                 } catch (err) {
                     console.error("Appwrite Vet Booking Error:", err);
@@ -2069,7 +2360,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             (async () => {
                 try {
-                    await databases.createDocument(DB_ID, COLL_APPS, ID.unique(), {
+                    const createdAppDoc = await databases.createDocument(DB_ID, COLL_APPS, ID.unique(), {
                         pet_name: petName,
                         date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
                         status: 'Pending Review',
@@ -2077,9 +2368,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                         img: petObj?.img || ''
                     });
 
+                    USER_APPS.unshift({ ...createdAppDoc, id: createdAppDoc.$id });
                     await addActivityLog('Applied to adopt', petName, 'fa-house-chimney-user');
                     showCustomPopup("Application Sent!", "Successfully submitted! Status: PENDING REVIEW.", false, () => {
-                        window.location.reload();
+                        const appsBtn = document.querySelector('[data-target="applications"]');
+                        if (appsBtn) appsBtn.click();
+                        else {
+                            mainDisplayPanel.innerHTML = renderMyApplicationsHTML();
+                        }
                     });
                 } catch (err) {
                     console.error("Appwrite Adoption Application Error:", err);
@@ -2130,14 +2426,24 @@ document.addEventListener('DOMContentLoaded', async () => {
                 };
 
                 try {
-                    await databases.createDocument(DB_ID, COLL_PETS, ID.unique(), newPetData);
+                    const createdPetDoc = await databases.createDocument(DB_ID, COLL_PETS, ID.unique(), newPetData);
+                    const newPet = { ...createdPetDoc, id: createdPetDoc.$id };
+                    REAL_DB_PETS.unshift(newPet);
                     await addActivityLog(isForAdoption ? 'Listed pet for adoption' : 'Registered private pet', newPetData.name, 'fa-shield-cat');
 
                     const successMsg = isForAdoption 
                         ? "Pet Registered Successfully! Photo saved to PawTrack Storage and listed on the adoption board." 
                         : "Pet added to your personal roster! Photo saved to PawTrack Storage.";
                     showCustomPopup("Success!", successMsg, false, () => {
-                        window.location.reload(); 
+                        if (isForAdoption) {
+                            const petsBtn = document.querySelector('[data-target="pets"]');
+                            if (petsBtn) petsBtn.click();
+                            else mainDisplayPanel.innerHTML = renderAvailablePetsHTML();
+                        } else {
+                            const homeBtn = document.querySelector('[data-target="home"]');
+                            if (homeBtn) homeBtn.click();
+                            else loadHome();
+                        }
                     });
                 } catch(dbErr) {
                     console.error("Appwrite Pet Registration Error:", dbErr);
@@ -2174,10 +2480,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                 });
                 CURRENT_USER = newName;
                 CURRENT_USER_PHONE = contact;
+                const nameDisplay = document.getElementById('userNameDisplay');
+                if (nameDisplay) {
+                    nameDisplay.innerText = CURRENT_USER ? 'Welcome, ' + CURRENT_USER + '!' : 'Welcome!';
+                }
                 await addActivityLog('Updated profile settings & information', '', 'fa-user-pen');
                 document.getElementById('editProfileModal').style.display = 'none';
                 showCustomPopup("Profile Saved", "Profile updated successfully!", false, () => {
-                    window.location.reload(); 
+                    populateProfileHub();
                 });
             } catch (err) {
                 showCustomPopup("Error", err.message, true);
