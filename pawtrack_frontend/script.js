@@ -102,12 +102,12 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             try {
-                // Register user using Appwrite Auth
+                // Register user using Appwrite Auth (storing username as primary Auth Name)
                 await account.create(
                     ID.unique(),
                     email,
                     password,
-                    fullName
+                    username || fullName
                 );
 
                 // Create initial session to update preferences
@@ -116,6 +116,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     await account.updatePrefs({
                         phone: contact,
                         username: username,
+                        fullName: fullName,
+                        firstName: firstName,
+                        lastName: lastName,
+                        middleName: middleName,
                         avatarUrl: '/resources/avatar/Avatar 1.jpg'
                     });
 

@@ -35,7 +35,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         const nameDisplay = document.getElementById('userNameDisplay');
         if (nameDisplay) {
-            nameDisplay.innerText = CURRENT_USER ? 'Welcome, ' + CURRENT_USER + '!' : 'Welcome!';
+            const welcomeName = CURRENT_USER_PREFS.username || CURRENT_USER;
+            nameDisplay.innerText = welcomeName ? 'Welcome, ' + welcomeName + '!' : 'Welcome!';
         }
 
         try {
@@ -2473,16 +2474,18 @@ document.addEventListener('DOMContentLoaded', async () => {
             const newName = `${fName} ${lName}`.trim();
 
             try {
-                if (newName) await account.updateName(newName);
                 await account.updatePrefs({
                     ...CURRENT_USER_PREFS,
+                    fullName: newName,
                     phone: contact
                 });
-                CURRENT_USER = newName;
+                CURRENT_USER_PREFS.fullName = newName;
+                CURRENT_USER_PREFS.phone = contact;
                 CURRENT_USER_PHONE = contact;
                 const nameDisplay = document.getElementById('userNameDisplay');
                 if (nameDisplay) {
-                    nameDisplay.innerText = CURRENT_USER ? 'Welcome, ' + CURRENT_USER + '!' : 'Welcome!';
+                    const welcomeName = CURRENT_USER_PREFS.username || newName;
+                    nameDisplay.innerText = welcomeName ? 'Welcome, ' + welcomeName + '!' : 'Welcome!';
                 }
                 await addActivityLog('Updated profile settings & information', '', 'fa-user-pen');
                 document.getElementById('editProfileModal').style.display = 'none';
@@ -2557,12 +2560,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         const emailEl = document.getElementById('profileEmail');
         const phoneEl = document.getElementById('profilePhone');
         
-        if (fullNameEl) fullNameEl.innerText = CURRENT_USER;
-        if (usernameEl) usernameEl.innerText = CURRENT_USER_PREFS.username ? '@' + CURRENT_USER_PREFS.username : '@' + CURRENT_USER_EMAIL.split('@')[0];
+        const displayFullName = CURRENT_USER_PREFS.fullName || CURRENT_USER;
+        const displayUsername = CURRENT_USER_PREFS.username || CURRENT_USER;
+
+        if (fullNameEl) fullNameEl.innerText = displayFullName;
+        if (usernameEl) usernameEl.innerText = '@' + displayUsername;
         if (emailEl) emailEl.innerText = CURRENT_USER_EMAIL;
         if (phoneEl) phoneEl.innerText = CURRENT_USER_PHONE || 'None';
 
-        const [fName = '', ...lNameParts] = (CURRENT_USER || '').split(' ');
+        const [fName = '', ...lNameParts] = (displayFullName || '').split(' ');
         const lName = lNameParts.join(' ');
         const editFName = document.getElementById('editFirstName');
         const editLName = document.getElementById('editLastName');
