@@ -3095,6 +3095,19 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     let currentTourIndex = 0;
     let isTourActive = false;
+    let currentHighlightedEl = null;
+
+    function setHighlightedTarget(el) {
+        if (currentHighlightedEl && currentHighlightedEl !== el) {
+            currentHighlightedEl.classList.remove('tour-target-elevated');
+        }
+        if (el) {
+            el.classList.add('tour-target-elevated');
+            currentHighlightedEl = el;
+        } else {
+            currentHighlightedEl = null;
+        }
+    }
 
     function positionSpotlightAndCard(step) {
         const overlay = document.getElementById('pawtrackTourOverlay');
@@ -3106,15 +3119,20 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         if (!targetEl || targetEl.offsetParent === null) {
             spotlight.style.display = 'none';
+            overlay.classList.add('no-target');
+            setHighlightedTarget(null);
             card.style.top = '50%';
             card.style.left = '50%';
             card.style.transform = 'translate(-50%, -50%)';
             return;
         }
 
+        overlay.classList.remove('no-target');
+        setHighlightedTarget(targetEl);
         spotlight.style.display = 'block';
+
         const rect = targetEl.getBoundingClientRect();
-        const padding = 8;
+        const padding = 6;
 
         const top = Math.max(0, rect.top - padding);
         const left = Math.max(0, rect.left - padding);
@@ -3126,6 +3144,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         spotlight.style.width = `${width}px`;
         spotlight.style.height = `${height}px`;
 
+        try {
+            const computedStyle = window.getComputedStyle(targetEl);
+            const br = parseFloat(computedStyle.borderRadius) || 12;
+            spotlight.style.borderRadius = `${Math.max(10, br + 4)}px`;
+        } catch (e) {
+            spotlight.style.borderRadius = '14px';
+        }
+
         if (window.innerWidth <= 768) {
             card.style.top = '';
             card.style.left = '';
@@ -3136,20 +3162,26 @@ document.addEventListener('DOMContentLoaded', async () => {
         card.style.transform = 'none';
         const cardWidth = 390;
         const cardHeight = card.offsetHeight || 220;
-        const margin = 18;
+        const margin = 16;
 
         let cardTop, cardLeft;
 
         if (step.placement === 'right') {
             cardLeft = rect.right + margin;
             cardTop = Math.max(20, rect.top + (rect.height / 2) - (cardHeight / 2));
-            if (cardLeft + cardWidth > window.innerWidth) {
+            if (cardLeft + cardWidth > window.innerWidth - 20) {
                 cardLeft = Math.max(20, rect.left - cardWidth - margin);
             }
         } else if (step.placement === 'bottom') {
             cardTop = rect.bottom + margin;
-            cardLeft = Math.max(20, Math.min(window.innerWidth - cardWidth - 20, rect.left + (rect.width / 2) - (cardWidth / 2)));
-            if (cardTop + cardHeight > window.innerHeight) {
+            cardLeft = rect.left + (rect.width / 2) - (cardWidth / 2);
+            if (cardLeft + cardWidth > window.innerWidth - 20) {
+                cardLeft = window.innerWidth - cardWidth - 24;
+            }
+            if (cardLeft < 20) {
+                cardLeft = 20;
+            }
+            if (cardTop + cardHeight > window.innerHeight - 20) {
                 cardTop = Math.max(20, rect.top - cardHeight - margin);
             }
         } else {
@@ -3212,7 +3244,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         setTimeout(() => {
             positionSpotlightAndCard(step);
-        }, 120);
+        }, 60);
+
+        setTimeout(() => {
+            positionSpotlightAndCard(step);
+        }, 220);
     }
 
     function startInteractiveTour(startIndex = 0) {
@@ -3234,6 +3270,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const overlay = document.getElementById('pawtrackTourOverlay');
         if (overlay) overlay.style.display = 'none';
         isTourActive = false;
+        setHighlightedTarget(null);
 
         if (markCompleted) {
             try {
@@ -3365,6 +3402,12 @@ document.addEventListener('DOMContentLoaded', async () => {
             positionSpotlightAndCard(TOUR_STEPS[currentTourIndex]);
         }
     });
+
+    window.addEventListener('scroll', () => {
+        if (isTourActive && TOUR_STEPS[currentTourIndex]) {
+            positionSpotlightAndCard(TOUR_STEPS[currentTourIndex]);
+        }
+    }, true);
 
     // Check on startup
     checkFirstTimeUserTour();

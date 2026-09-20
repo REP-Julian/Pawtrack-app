@@ -1,0 +1,1 @@
+import{a as o}from"./appwrite-BTLpE_3q.js";async function t(){try{const a=await o.get();if(a&&a.$id){window.location.replace("./Dashboard.html");return}}catch{}window.location.replace("./PawTrackLogin.html")}t();
