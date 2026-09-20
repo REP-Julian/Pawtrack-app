@@ -1,0 +1,1 @@
+import{a as o}from"./appwrite-CRWyoAJa.js";async function t(){try{const a=await o.get();if(a&&a.$id){window.location.replace("./Dashboard.html");return}}catch{}window.location.replace("./PawTrackLogin.html")}t();
