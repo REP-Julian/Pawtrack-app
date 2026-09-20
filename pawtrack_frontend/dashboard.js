@@ -690,7 +690,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             availablePets.forEach(pet => {
                 const genderClass = pet.gender && pet.gender.toLowerCase() === 'female' ? 'gender-female' : 'gender-male';
                 petSelectorHTML += `
-                    <div class="pet-select-card ${genderClass}" data-petid="${pet.id}">
+                    <div class="pet-select-card ${genderClass}" data-petid="${pet.id}" data-pet="${pet.id}">
                         <img src="${pet.img}" alt="${pet.name}">
                         <span>${pet.name}</span>
                     </div>
@@ -721,7 +721,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                             
                             <div class="reg-row">
                                 <div class="reg-input"><label>Owner Name</label><input type="text" id="apptOwner" placeholder="Auto-filled" readonly class="readonly-input"></div>
-                                <div class="reg-input"><label>Contact Number <span class="required">*</span></label><input type="tel" placeholder="+63 XXX-XXX-XXXX" required></div>
+                                <div class="reg-input"><label>Contact Number <span class="required">*</span></label><input type="tel" id="apptContact" placeholder="+63 XXX-XXX-XXXX" required></div>
                             </div>
                             <div class="reg-row">
                                 <div class="reg-input"><label>Pet Type</label><input type="text" id="apptPetType" placeholder="Auto-filled" readonly class="readonly-input"></div>
@@ -1610,6 +1610,47 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
+    function selectVetAppointmentPet(petId) {
+        if (!petId) return;
+        const petCard = document.querySelector(`.pet-select-card[data-petid="${petId}"]`) || 
+                        document.querySelector(`.pet-select-card[data-pet="${petId}"]`);
+        
+        document.querySelectorAll('.pet-select-card').forEach(c => c.classList.remove('selected'));
+        if (petCard) petCard.classList.add('selected');
+
+        const hiddenInput = document.getElementById('apptPetSelectorHidden');
+        if (hiddenInput) hiddenInput.value = petId;
+
+        const selectedPet = REAL_DB_PETS.find(p => p.id?.toString() === petId?.toString());
+        if (selectedPet) {
+            const ownerEl = document.getElementById('apptOwner');
+            if (ownerEl) ownerEl.value = selectedPet.owner || CURRENT_USER || '';
+
+            const contactEl = document.getElementById('apptContact');
+            if (contactEl) {
+                contactEl.value = selectedPet.contact_number || CURRENT_USER_PHONE || (CURRENT_USER_PREFS && CURRENT_USER_PREFS.phone) || '';
+            }
+
+            const petTypeEl = document.getElementById('apptPetType');
+            if (petTypeEl) {
+                const b = (selectedPet.breed || '').toLowerCase();
+                const t = (selectedPet.type || '').toLowerCase();
+                const isCat = b.includes('cat') || b.includes('kitten') || b.includes('feline') || 
+                              b.includes('persian') || b.includes('siamese') || t.includes('cat');
+                petTypeEl.value = selectedPet.type || (isCat ? "Cat" : "Dog");
+            }
+
+            const breedEl = document.getElementById('apptBreed');
+            if (breedEl) breedEl.value = selectedPet.breed || 'Unknown';
+
+            const genderEl = document.getElementById('apptGender');
+            if (genderEl) genderEl.value = selectedPet.gender || 'Unknown';
+
+            const weightEl = document.getElementById('apptWeight');
+            if (weightEl) weightEl.value = selectedPet.weight || '';
+        }
+    }
+
     function updateCartUI() {
         const badge = document.getElementById('cartBadge');
         if(badge) badge.innerText = cartItems.length;
@@ -1767,6 +1808,10 @@ document.addEventListener('DOMContentLoaded', async () => {
            else if (target === 'vet') {
                 mainDisplayPanel.innerHTML = renderVetAppointmentsHTML();
                 updateVetCardUI();
+                const firstPetCard = document.querySelector('.pet-select-card');
+                if (firstPetCard) {
+                    selectVetAppointmentPet(firstPetCard.getAttribute('data-petid') || firstPetCard.getAttribute('data-pet'));
+                }
             } else if (target === 'shop') {
                 mainDisplayPanel.innerHTML = renderPetShopHTML();
                 updateCartUI(); 
@@ -2017,6 +2062,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                         showCustomPopup("Cancelled", "Appointment successfully cancelled.", false, () => {
                             mainDisplayPanel.innerHTML = renderVetAppointmentsHTML();
                             updateVetCardUI();
+                            const firstPetCard = document.querySelector('.pet-select-card');
+                            if (firstPetCard) {
+                                selectVetAppointmentPet(firstPetCard.getAttribute('data-petid') || firstPetCard.getAttribute('data-pet'));
+                            }
                         });
                     } catch(err) {
                         console.error("Appwrite Cancel Vet Error:", err);
@@ -2026,21 +2075,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             );
         }
 
-        // --- VET VISUAL PET SELECTOR ---
-        const visualPetBtn = e.target.closest('.pet-select-card');
-        if (visualPetBtn && document.getElementById('apptPetSelectorHidden')) {
-            document.querySelectorAll('.pet-select-card').forEach(c => c.classList.remove('selected'));
-            visualPetBtn.classList.add('selected');
-            const petId = visualPetBtn.getAttribute('data-pet');
-            document.getElementById('apptPetSelectorHidden').value = petId;
-            const petInfo = myPetsDB[petId];
-            if (petInfo) {
-                document.getElementById('apptOwner').value = petInfo.owner;
-                document.getElementById('apptPetType').value = petInfo.type;
-                document.getElementById('apptBreed').value = petInfo.breed;
-                document.getElementById('apptGender').value = petInfo.gender;
-                document.getElementById('apptWeight').value = petInfo.weight;
-            }
+        // --- VET APPOINTMENT PET SELECTOR ---
+        const vetPetCard = e.target.closest('.pet-select-card');
+        if (vetPetCard && (document.getElementById('apptPetSelectorHidden') || document.getElementById('vetBookingForm'))) {
+            const petId = vetPetCard.getAttribute('data-petid') || vetPetCard.getAttribute('data-pet');
+            selectVetAppointmentPet(petId);
         }
 
         if (e.target.closest('#btnPrevVet')) {
@@ -2096,26 +2135,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             if(selectedMyPetId) document.querySelector(`[data-pet="${selectedMyPetId}"]`).click();
         }
 
-        // --- VET APPOINTMENT PET SELECTOR ---
-        const vetPetCard = e.target.closest('.pet-select-card');
-        if (vetPetCard && document.getElementById('vetBookingForm')) {
-            // Highlight the selected pet visually
-            document.querySelectorAll('.pet-select-card').forEach(c => c.classList.remove('selected'));
-            vetPetCard.classList.add('selected');
-
-            // Save the ID for the form submission
-            const petId = vetPetCard.getAttribute('data-petid');
-            document.getElementById('apptPetSelectorHidden').value = petId;
-
-            // Auto-fill the form with real database data!
-            const selectedPet = REAL_DB_PETS.find(p => p.id.toString() === petId);
-            if (selectedPet) {
-                document.getElementById('apptOwner').value = CURRENT_USER;
-                document.getElementById('apptPetType').value = selectedPet.breed && selectedPet.breed.toLowerCase().includes('cat') ? "Cat" : "Dog"; 
-                document.getElementById('apptBreed').value = selectedPet.breed || "Unknown";
-                document.getElementById('apptGender').value = selectedPet.gender || "Unknown";
-            }
-        }
 
         const myPetCard = e.target.closest('.my-pet-card');
         if (myPetCard && !document.getElementById('apptPetSelectorHidden')) { 
@@ -2349,9 +2368,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (!petId) { showCustomPopup("Error", "Please select a pet for the appointment by clicking their picture!", true); return; }
             if (!vetId) { showCustomPopup("Error", "Please choose a veterinarian by clicking 'Confirm' on the profile card!", true); return; }
 
-            const petNameText = document.querySelector(`.pet-select-card[data-petid="${petId}"] span`).innerText;
-            const vetNameText = document.getElementById('apptSelectedVetName').value;
             const petObj = REAL_DB_PETS.find(p => p.id?.toString() === petId?.toString());
+            const petNameEl = document.querySelector(`.pet-select-card[data-petid="${petId}"] span`) ||
+                              document.querySelector(`.pet-select-card[data-pet="${petId}"] span`);
+            const petNameText = petObj?.name || (petNameEl ? petNameEl.innerText : 'My Pet');
+            const vetNameText = document.getElementById('apptSelectedVetName').value;
 
             (async () => {
                 try {
@@ -2373,6 +2394,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                         else {
                             mainDisplayPanel.innerHTML = renderVetAppointmentsHTML();
                             updateVetCardUI();
+                            const firstPetCard = document.querySelector('.pet-select-card');
+                            if (firstPetCard) {
+                                selectVetAppointmentPet(firstPetCard.getAttribute('data-petid') || firstPetCard.getAttribute('data-pet'));
+                            }
                         }
                     });
                 } catch (err) {

@@ -1769,12 +1769,15 @@ body {
     height: 26px;
     border-radius: 50%;
     object-fit: cover;
+    pointer-events: none;
 }
 
 .pet-select-card span {
     font-size: 0.8rem;
     font-weight: 700;
     color: var(--text-main);
+    pointer-events: none;
+    user-select: none;
 }
 
 .pet-select-card:hover {
