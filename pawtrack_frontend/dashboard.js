@@ -745,14 +745,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     // 🛒 DYNAMIC PET SHOP SYSTEM
     // ==========================================
     const SHOP_ITEMS = [
-        { id: 1, brand: "NaturePet", name: "Nutricare Organic Dry Cat Food (1kg)", price: 250.00, category: "Cat Food", img: "/static/resources/shop/catfood.jpg" },
+        { id: 1, brand: "NaturePet", name: "Nutricare Organic Dry Cat Food (1kg)", price: 250.00, category: "Cat Food", img: "/resources/shop/catfood.jpg" },
         { id: 2, brand: "PawSource", name: "100g Real Beef Dog Biscuit Treats", price: 150.00, category: "Dog Food & Treats", img: "https://images.unsplash.com/photo-1589924691995-400dc9ecc119?w=400" },
-        { id: 3, brand: "KONG", name: "Classic Durable Rubber Dog Toy", price: 450.00, category: "Toys", img: "/static/resources/shop/dog_toy.jpg" },
-        { id: 4, brand: "Paws & Pals", name: "Heavy Duty Reflective Leash", price: 299.00, category: "Accessories", img: "/static/resources/shop/leash.jpg" },
-        { id: 5, brand: "PetSafe", name: "Ceramic Anti-Slip Pet Bowl", price: 180.00, category: "Accessories", img: "/static/resources/shop/bowl.jpg" },
+        { id: 3, brand: "KONG", name: "Classic Durable Rubber Dog Toy", price: 450.00, category: "Toys", img: "/resources/shop/dog_toy.jpg" },
+        { id: 4, brand: "Paws & Pals", name: "Heavy Duty Reflective Leash", price: 299.00, category: "Accessories", img: "/resources/shop/leash.jpg" },
+        { id: 5, brand: "PetSafe", name: "Ceramic Anti-Slip Pet Bowl", price: 180.00, category: "Accessories", img: "/resources/shop/bowl.jpg" },
         { id: 6, brand: "CozyPet", name: "Fluffy Calming Pet Bed (Medium)", price: 550.00, category: "Accessories", img: "https://images.unsplash.com/photo-1541781774459-bb2af2f05b55?w=400" },
         { id: 7, brand: "Whiskas", name: "Tuna Flavor Wet Cat Food (12 Pouch)", price: 540.00, category: "Cat Food", img: "https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=400" },
-        { id: 8, brand: "Pedigree", name: "Adult Beef & Veg Dry Dog Food (1.5kg)", price: 380.00, category: "Dog Food & Treats", img: "/static/resources/shop/dogfood.jpg" },
+        { id: 8, brand: "Pedigree", name: "Adult Beef & Veg Dry Dog Food (1.5kg)", price: 380.00, category: "Dog Food & Treats", img: "/resources/shop/dogfood.jpg" },
         { id: 9, brand: "FelineFun", name: "Interactive Feather Teaser Wand", price: 95.00, category: "Toys", img: "https://images.unsplash.com/photo-1526336024174-e58f5cdd8e13?w=400" },
         { id: 10, brand: "GroomPro", name: "Silicone Pet Bath Massage Brush", price: 110.00, category: "Grooming", img: "https://images.unsplash.com/photo-1516734212186-a967f81ad0d7?w=400" }
     ];
@@ -874,17 +874,20 @@ document.addEventListener('DOMContentLoaded', async () => {
                         <label>Reason for Adoption</label>
                         <textarea name="reason_for_adoption" placeholder="Briefly describe the pet's background and why they need a new home..." style="min-height: 70px;"></textarea>
                     </div>
-                    <div class="reg-row" style="background: rgba(79, 70, 229, 0.05); padding: 15px; border-radius: 12px; border: 1px solid #cbd5e1;">
-    <div class="reg-input" style="flex-direction: row; align-items: center; gap: 15px;">
-        <label style="margin-bottom: 0;">Put up for Adoption?</label>
-        <input type="checkbox" id="regForAdoption" style="width: 25px; height: 25px; cursor: pointer;">
-        <span style="font-size: 0.9rem; color: #64748b; font-weight: 600;">(Leave unchecked to save as a personal pet in your Roster)</span>
-    </div>
-</div>
+                    <div class="reg-row reg-adoption-box">
+                        <div class="reg-input" style="flex-direction: row; align-items: center; gap: 15px;">
+                            <label style="margin-bottom: 0; cursor: pointer;" for="regForAdoption">Put up for Adoption?</label>
+                            <input type="checkbox" id="regForAdoption" style="width: 22px; height: 22px; cursor: pointer; accent-color: var(--primary);">
+                            <span style="font-size: 0.88rem; color: var(--text-muted); font-weight: 500;">(Leave unchecked to save as a personal pet in your Roster)</span>
+                        </div>
+                    </div>
 
-                    <div class="reg-actions" style="margin-top: 10px;">
-                        <button type="button" class="btn-cancel" id="btnCancelReg">Cancel</button>
-                        <button type="submit" class="btn-submit">Register Pet</button>
+                    <div class="reg-actions">
+                        <button type="button" class="btn-cancel-reg" id="btnCancelReg">Cancel</button>
+                        <button type="submit" class="btn-primary btn-submit-reg">
+                            <i class="fa-solid fa-paw"></i>
+                            <span>Register Pet</span>
+                        </button>
                     </div>
                     
                 </div>
@@ -1306,12 +1309,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                 total += parseFloat(item.price);
                 cartItemsContainer.innerHTML += `
                     <div class="cart-item-row">
-                        <img src="${item.img}" class="cart-item-img">
+                        <img src="${item.img}" class="cart-item-img" onerror="this.src='/resources/shop/bowl.jpg'" alt="${item.name}">
                         <div class="cart-item-info">
                             <div class="cart-item-title">${item.name}</div>
                             <div class="cart-item-price">₱ ${item.price}</div>
                         </div>
-                        <div><button class="btn-remove-item" data-index="${index}" style="background:none; border:none; color:#ef4444; font-size:1.2rem; cursor:pointer;"><i class="fa-solid fa-trash"></i></button></div>
+                        <div><button class="btn-remove-item" data-index="${index}" title="Remove item"><i class="fa-solid fa-trash-can"></i></button></div>
                     </div>
                 `;
             });
@@ -1457,6 +1460,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             } else if (target === 'breeding') {
                 mainDisplayPanel.innerHTML = renderMatchMakerHTML();
                 selectedMyPetId = null;
+            } else if (target === 'messages') {
+                mainDisplayPanel.innerHTML = renderMessagesPageHTML();
+                initMessengerPage();
             }
         });
     });
@@ -2296,7 +2302,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         // --- 5. ACTIVITY LOGS (DIRECT FROM APPWRITE DATABASE - ZERO LOCALSTORAGE) ---
         const logContainer = document.getElementById('recentActivityLogs');
         if (logContainer) {
-            logContainer.innerHTML = '<p style="text-align:center; color:#94a3b8; padding:15px;">Loading activity logs...</p>';
+            logContainer.innerHTML = '<div class="activity-loading"><i class="fa-solid fa-circle-notch fa-spin"></i> Loading activity logs...</div>';
             try {
                 const logsRes = await databases.listDocuments(DB_ID, COLL_LOGS, [
                     Query.equal('user_id', CURRENT_USER_ID),
@@ -2308,63 +2314,148 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if (logs.length > 0) {
                     logs.forEach(log => {
                         const ts = parseInt(log.timestamp) || new Date(log.$createdAt).getTime();
-                        const dateObj = new Date(ts);
-                        const timeString = dateObj.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+                        const friendlyTime = formatFriendlyTime(ts);
+                        const theme = getActivityTheme(log.action, log.icon);
+                        const safeTarget = log.target ? escapeHtml(log.target) : '';
+                        const safeAction = escapeHtml(log.action || 'Activity recorded');
 
                         logContainer.innerHTML += `
                             <div class="activity-item">
-                                <div class="activity-icon"><i class="fa-solid ${log.icon}"></i></div>
+                                <div class="activity-icon-bubble ${theme.themeClass}">
+                                    <i class="fa-solid ${theme.icon}"></i>
+                                </div>
                                 <div class="activity-details">
-                                    <p><strong>${log.action}</strong> ${log.target ? '"' + log.target + '"' : ''}</p>
-                                    <small>${dateObj.toLocaleDateString()} at ${timeString}</small>
+                                    <div class="activity-row-main">
+                                        <span class="activity-action-text">${safeAction}</span>
+                                        <span class="activity-category-pill ${theme.tagClass}">${theme.tagLabel}</span>
+                                    </div>
+                                    ${safeTarget ? `
+                                        <div class="activity-target-pill">
+                                            <i class="fa-solid fa-quote-left"></i>
+                                            <span>${safeTarget}</span>
+                                        </div>
+                                    ` : ''}
+                                    <div class="activity-meta">
+                                        <span class="activity-timestamp"><i class="fa-regular fa-clock"></i> ${friendlyTime}</span>
+                                        <span class="activity-verified-tag"><i class="fa-solid fa-circle-check"></i> Recorded</span>
+                                    </div>
                                 </div>
                             </div>
                         `;
                     });
                 } else {
                     logContainer.innerHTML = `
-                        <div class="activity-item">
-                            <div class="activity-icon"><i class="fa-solid fa-user-check"></i></div>
-                            <div class="activity-details">
-                                <p><strong>Account verified</strong> and ready to use!</p>
-                                <small>System Log</small>
-                            </div>
+                        <div class="activity-empty-state">
+                            <div class="empty-icon-circle"><i class="fa-solid fa-shield-halved"></i></div>
+                            <h4>Security & Account Verified</h4>
+                            <p>Your session is active. Actions like pet registrations, adoptions, and profile updates will appear here in real time.</p>
                         </div>
                     `;
                 }
             } catch (err) {
                 console.warn("Could not load activity logs:", err);
-                logContainer.innerHTML = '<p style="text-align:center; color:#94a3b8; padding:15px;">No activity recorded yet.</p>';
+                logContainer.innerHTML = `
+                    <div class="activity-empty-state">
+                        <div class="empty-icon-circle"><i class="fa-solid fa-circle-info"></i></div>
+                        <h4>No Activity Recorded</h4>
+                        <p>No past logs found for your account yet.</p>
+                    </div>
+                `;
             }
         }
     }
-// ==========================================
-    // PAWTRACK MESSENGER SYSTEM
-    // ==========================================
-    const chatFab = document.getElementById('chatFab');
-    const chatWindow = document.getElementById('chatWindow');
-    const chatCloseBtn = document.getElementById('chatCloseBtn');
-    const chatBackBtn = document.getElementById('chatBackBtn');
-    const btnNewChat = document.getElementById('btnNewChat');
-    const chatTitle = document.getElementById('chatTitle');
-    const chatListView = document.getElementById('chatListView');
-    const chatConvoView = document.getElementById('chatConvoView');
-    const chatMessagesBox = document.getElementById('chatMessagesBox');
-    const chatInputField = document.getElementById('chatInputField');
-    const btnSendMsg = document.getElementById('btnSendMsg');
 
-    let currentActiveChat = null;
+    function escapeHtml(str) {
+        if (!str) return '';
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
 
-    // 1. Toggle Window & Load Inbox
-    chatFab.addEventListener('click', () => {
-        chatWindow.classList.toggle('active');
-        if(chatWindow.classList.contains('active')) {
-            loadInbox();
+    function getActivityTheme(action, icon) {
+        const act = (action || '').toLowerCase();
+        if (act.includes('log') || act.includes('auth') || act.includes('verified') || act.includes('session')) {
+            return {
+                themeClass: 'theme-emerald',
+                icon: 'fa-shield-halved',
+                tagClass: 'tag-emerald',
+                tagLabel: 'Security'
+            };
         }
-    });
+        if (act.includes('bin') || act.includes('delet') || act.includes('dumpster') || act.includes('trash')) {
+            return {
+                themeClass: 'theme-rose',
+                icon: 'fa-trash-can',
+                tagClass: 'tag-rose',
+                tagLabel: 'Archive'
+            };
+        }
+        if (act.includes('pet') || act.includes('adopt') || act.includes('restor') || act.includes('breed')) {
+            return {
+                themeClass: 'theme-terracotta',
+                icon: 'fa-paw',
+                tagClass: 'tag-terracotta',
+                tagLabel: 'Pet Care'
+            };
+        }
+        if (act.includes('photo') || act.includes('avatar') || act.includes('profile') || act.includes('settings')) {
+            return {
+                themeClass: 'theme-honey',
+                icon: 'fa-user-pen',
+                tagClass: 'tag-honey',
+                tagLabel: 'Profile'
+            };
+        }
+        if (act.includes('shop') || act.includes('cart') || act.includes('item') || act.includes('buy')) {
+            return {
+                themeClass: 'theme-amber',
+                icon: 'fa-bag-shopping',
+                tagClass: 'tag-amber',
+                tagLabel: 'Shop'
+            };
+        }
+        let finalIcon = icon || 'fa-bell';
+        if (finalIcon === 'fa-right-to-bracket') finalIcon = 'fa-arrow-right-to-bracket';
+        return {
+            themeClass: 'theme-sage',
+            icon: finalIcon,
+            tagClass: 'tag-sage',
+            tagLabel: 'Activity'
+        };
+    }
 
-    chatCloseBtn.addEventListener('click', () => chatWindow.classList.remove('active'));
+    function formatFriendlyTime(ts) {
+        const now = Date.now();
+        const diff = Math.max(0, now - ts);
+        const minute = 60 * 1000;
+        const hour = 60 * minute;
+        const day = 24 * hour;
 
+        const dateObj = new Date(ts);
+        const timeStr = dateObj.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+
+        if (diff < 2 * minute) {
+            return 'Just now';
+        } else if (diff < 60 * minute) {
+            const mins = Math.floor(diff / minute);
+            return `${mins}m ago`;
+        } else if (diff < 24 * hour) {
+            const hrs = Math.floor(diff / hour);
+            return `${hrs}h ago (${timeStr})`;
+        } else {
+            const isYesterday = (new Date(now - day)).toDateString() === dateObj.toDateString();
+            if (isYesterday) {
+                return `Yesterday at ${timeStr}`;
+            }
+            return dateObj.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) + ` at ${timeStr}`;
+        }
+    }
+// ==========================================
+    // PAWTRACK MESSENGER SYSTEM (SIDEBAR INTEGRATED)
+    // ==========================================
     const logoutBtn = document.getElementById('btnLogout');
     if (logoutBtn) {
         logoutBtn.addEventListener('click', async () => {
@@ -2377,145 +2468,265 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
-    // 2. Fetch Inbox from Django
-    function loadInbox() {
-        chatConvoView.style.display = 'none';
-        chatListView.style.display = 'flex';
-        chatBackBtn.style.display = 'none';
-        btnNewChat.style.display = 'flex';
-        chatTitle.innerHTML = '<i class="fa-solid fa-messages"></i> Messages';
-        currentActiveChat = null;
-        chatListView.innerHTML = '<p style="text-align:center; margin-top:20px; color:#64748b;">Loading...</p>';
+    let currentActiveChat = null;
 
-        Promise.resolve().then(() => {
-            const inbox = Object.keys(CHATS_STORE).map(u => {
-                const msgs = CHATS_STORE[u];
-                const last = msgs[msgs.length - 1];
-                return {
-                    contact: u,
-                    last_message: last.text,
-                    time: last.time,
-                    unread: 0
-                };
-            });
-            return { status: 'success', inbox: inbox };
-        })
-        .then(data => {
-            if (data.status === 'success') {
-                chatListView.innerHTML = '';
-                if(data.inbox.length === 0) {
-                    chatListView.innerHTML = '<p style="text-align:center; margin-top:20px; color:#64748b; font-weight:bold;">No messages yet.<br><br>Click the + icon to start a chat with a username!</p>';
-                    return;
-                }
-                
-                data.inbox.forEach(chat => {
-                    const unreadBadge = chat.unread > 0 ? `<span class="chat-unread">${chat.unread}</span>` : '';
-                    chatListView.innerHTML += `
-                        <div class="chat-list-item" data-chat="${chat.contact}">
-                            <div class="chat-avatar ai-avatar" style="background: linear-gradient(135deg, #4f46e5, #ec4899);"><i class="fa-solid fa-user"></i></div>
-                            <div class="chat-list-info">
-                                <div style="display:flex; justify-content:space-between; align-items:center;">
-                                    <h4>@${chat.contact}</h4>
-                                    <span style="font-size:0.7rem; color:#94a3b8;">${chat.time}</span>
-                                </div>
-                                <p>${chat.last_message}</p>
-                            </div>
-                            ${unreadBadge}
+    // Seed friendly default welcome conversation if CHATS_STORE is empty
+    if (Object.keys(CHATS_STORE).length === 0) {
+        CHATS_STORE['PawTrackCommunity'] = [
+            { text: "Welcome to PawTrack! Connect with pet lovers, adopters, and arrange playdates right here.", type: 'received', time: '10:00 AM' }
+        ];
+    }
+
+    function renderMessagesPageHTML() {
+        return `
+            <div class="messages-page-container">
+                <div class="page-header" style="margin-bottom: 24px;">
+                    <div>
+                        <h2><i class="fa-solid fa-comments" style="color: var(--primary);"></i> PawTrack Messenger</h2>
+                        <p>Direct real-time conversations with pet owners, adopters, and community members.</p>
+                    </div>
+                    <button class="btn-primary" id="btnPageNewChat">
+                        <i class="fa-solid fa-plus"></i>
+                        <span>New Conversation</span>
+                    </button>
+                </div>
+
+                <div class="messenger-workspace">
+                    <div class="messenger-sidebar-panel">
+                        <div class="messenger-search-bar">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                            <input type="text" id="messengerSearchInput" placeholder="Search conversations...">
                         </div>
-                    `;
-                });
-            }
-        });
+                        <div class="messenger-inbox-list" id="messengerInboxList">
+                            <!-- Populated dynamically -->
+                        </div>
+                    </div>
+
+                    <div class="messenger-chat-panel" id="messengerChatPanel">
+                        <!-- Active conversation stream -->
+                    </div>
+                </div>
+            </div>
+        `;
     }
 
-    chatBackBtn.addEventListener('click', loadInbox);
+    function initMessengerPage(autoOpenUser = null) {
+        const inboxList = document.getElementById('messengerInboxList');
+        const chatPanel = document.getElementById('messengerChatPanel');
+        const newChatBtn = document.getElementById('btnPageNewChat');
+        const searchInput = document.getElementById('messengerSearchInput');
 
-    // 3. Open a Conversation
-    function openConversation(username) {
-        currentActiveChat = username;
-        chatTitle.innerHTML = `<i class="fa-solid fa-user"></i> @${username}`;
-        chatBackBtn.style.display = 'flex';
-        btnNewChat.style.display = 'none'; // Hide the + button when inside a chat
-        chatListView.style.display = 'none';
-        chatConvoView.style.display = 'flex';
-        chatMessagesBox.innerHTML = '<p style="text-align:center; color:#64748b; font-size:0.8rem;">Loading conversation...</p>';
+        if (!inboxList || !chatPanel) return;
 
-        Promise.resolve().then(() => {
+        function refreshInbox(filter = '') {
+            inboxList.innerHTML = '';
+            const contacts = Object.keys(CHATS_STORE).filter(u => u.toLowerCase().includes(filter.toLowerCase()));
+
+            if (contacts.length === 0) {
+                inboxList.innerHTML = `
+                    <div class="inbox-empty-state">
+                        <i class="fa-solid fa-comments"></i>
+                        <p>No conversations found.<br>Click "New Conversation" to start chatting!</p>
+                    </div>
+                `;
+                return;
+            }
+
+            contacts.forEach(username => {
+                const msgs = CHATS_STORE[username] || [];
+                const lastMsg = msgs.length > 0 ? msgs[msgs.length - 1].text : 'No messages yet';
+                const lastTime = msgs.length > 0 ? msgs[msgs.length - 1].time : '';
+                const isActive = username === currentActiveChat ? 'active' : '';
+
+                const item = document.createElement('div');
+                item.className = `inbox-item ${isActive}`;
+                item.setAttribute('data-user', username);
+                item.innerHTML = `
+                    <div class="inbox-avatar">
+                        <i class="fa-solid fa-user"></i>
+                    </div>
+                    <div class="inbox-info">
+                        <div class="inbox-info-header">
+                            <h4>@${escapeHtml(username)}</h4>
+                            <span class="inbox-time">${lastTime}</span>
+                        </div>
+                        <p class="inbox-snippet">${escapeHtml(lastMsg)}</p>
+                    </div>
+                `;
+                item.onclick = () => openActiveChat(username);
+                inboxList.appendChild(item);
+            });
+        }
+
+        function openActiveChat(username) {
+            currentActiveChat = username;
+
+            // Highlight selected item in inbox list
+            document.querySelectorAll('.inbox-item').forEach(el => {
+                el.classList.toggle('active', el.getAttribute('data-user') === username);
+            });
+
             const msgs = CHATS_STORE[username] || [];
-            return { status: 'success', messages: msgs };
-        })
-        .then(data => {
-            if(data.status === 'success') {
-                chatMessagesBox.innerHTML = '';
-                if(data.messages.length === 0) chatMessagesBox.innerHTML = '<p style="text-align:center; color:#94a3b8; font-size:0.85rem; margin-top: 20px;">This is the beginning of your chat history.</p>';
-                
-                data.messages.forEach(msg => appendMessageBubble(msg.text, msg.type, msg.time));
+
+            chatPanel.innerHTML = `
+                <div class="chat-pane-header">
+                    <div class="chat-header-user">
+                        <div class="chat-header-avatar"><i class="fa-solid fa-user"></i></div>
+                        <div>
+                            <h3>@${escapeHtml(username)}</h3>
+                            <span class="chat-online-status"><span class="status-dot-green"></span> Active Conversation</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="chat-pane-messages" id="activeChatStream">
+                    ${msgs.length === 0 ? '<div class="empty-stream"><p>This is the start of your message history with @' + escapeHtml(username) + '</p></div>' : ''}
+                </div>
+
+                <div class="chat-pane-input-bar">
+                    <div class="chat-input-pill">
+                        <input type="text" id="activeChatInput" placeholder="Write a message to @${escapeHtml(username)}...">
+                    </div>
+                    <button class="btn-chat-send" id="btnActiveSend">
+                        <i class="fa-solid fa-paper-plane"></i>
+                    </button>
+                </div>
+            `;
+
+            const stream = document.getElementById('activeChatStream');
+            msgs.forEach(m => {
+                appendChatMessageToStream(stream, m.text, m.type, m.time);
+            });
+            stream.scrollTop = stream.scrollHeight;
+
+            const input = document.getElementById('activeChatInput');
+            const sendBtn = document.getElementById('btnActiveSend');
+
+            function handleSend() {
+                const text = input.value.trim();
+                if (!text || !currentActiveChat) return;
+
+                const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                appendChatMessageToStream(stream, text, 'sent', timeStr);
+                input.value = '';
+                stream.scrollTop = stream.scrollHeight;
+
+                if (!CHATS_STORE[currentActiveChat]) CHATS_STORE[currentActiveChat] = [];
+                CHATS_STORE[currentActiveChat].push({ text, type: 'sent', time: timeStr });
+                refreshInbox(searchInput.value.trim());
+
+                if (currentActiveChat === 'PawTrackCommunity') {
+                    setTimeout(() => {
+                        const replyTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                        const replyText = "We're glad to have you! Feel free to connect with pet owners across PawTrack.";
+                        CHATS_STORE['PawTrackCommunity'].push({ text: replyText, type: 'received', time: replyTime });
+                        if (currentActiveChat === 'PawTrackCommunity') {
+                            appendChatMessageToStream(stream, replyText, 'received', replyTime);
+                            stream.scrollTop = stream.scrollHeight;
+                        }
+                        refreshInbox(searchInput.value.trim());
+                    }, 1000);
+                }
             }
-        });
+
+            sendBtn.onclick = handleSend;
+            input.onkeypress = (e) => { if (e.key === 'Enter') handleSend(); };
+            input.focus();
+        }
+
+        function appendChatMessageToStream(streamEl, text, type, timeStr) {
+            const b = document.createElement('div');
+            b.className = `stream-bubble bubble-${type}`;
+            b.innerHTML = `
+                <div class="bubble-text">${escapeHtml(text)}</div>
+                <div class="bubble-time">${timeStr}</div>
+            `;
+            streamEl.appendChild(b);
+        }
+
+        searchInput.oninput = (e) => {
+            refreshInbox(e.target.value.trim());
+        };
+
+        newChatBtn.onclick = () => {
+            showCustomPrompt("Start Conversation", "Enter the PawTrack username you'd like to message:", (targetUser) => {
+                if (targetUser && targetUser.trim()) {
+                    const cleanUser = targetUser.trim().replace('@', '');
+                    if (!CHATS_STORE[cleanUser]) {
+                        CHATS_STORE[cleanUser] = [];
+                    }
+                    refreshInbox();
+                    openActiveChat(cleanUser);
+                }
+            });
+        };
+
+        const allContacts = Object.keys(CHATS_STORE);
+        const contactToOpen = autoOpenUser || (allContacts.length > 0 ? allContacts[0] : null);
+
+        refreshInbox();
+        if (contactToOpen) {
+            openActiveChat(contactToOpen);
+        } else {
+            chatPanel.innerHTML = `
+                <div class="empty-conversation-state">
+                    <div class="empty-icon-circle"><i class="fa-solid fa-comments"></i></div>
+                    <h3>Your Messages</h3>
+                    <p>Select a conversation from the left or click "New Conversation" to start chatting.</p>
+                </div>
+            `;
+        }
     }
 
-    // Handle clicks on Inbox items
-    chatListView.addEventListener('click', (e) => {
-        const item = e.target.closest('.chat-list-item');
-        if (item) openConversation(item.getAttribute('data-chat'));
-    });
-
-    // 4. Start New Chat by Username
-    btnNewChat.addEventListener('click', () => {
-        showCustomPrompt("Start a Chat", "Enter the exact PawTrack username of the person you want to message:", (targetUsername) => {
-            openConversation(targetUsername);
-        });
-    });
-
-    // 5. Connect to "Message Owner" Button in Match Maker!
+    // Connect to "Message Owner" in Match Maker
     mainDisplayPanel.addEventListener('click', (e) => {
         const msgOwnerBtn = e.target.closest('.btn-message-owner');
         if (msgOwnerBtn) {
             const ownerUsername = msgOwnerBtn.getAttribute('data-owner');
-            // Force open the chat window
-            chatWindow.classList.add('active');
-            chatFab.querySelector('.badge').style.display = 'none';
-            // Open their specific chat
-            openConversation(ownerUsername);
+            const msgNavBtn = document.querySelector('.sidebar-nav .nav-btn[data-target="messages"]');
+            if (msgNavBtn) {
+                navButtons.forEach(b => b.classList.remove('active'));
+                msgNavBtn.classList.add('active');
+            }
+            mainDisplayPanel.scrollTo({ top: 0, behavior: 'smooth' });
+            mainDisplayPanel.innerHTML = renderMessagesPageHTML();
+            initMessengerPage(ownerUsername);
         }
     });
 
-    // 6. Sending Messages
-    function appendMessageBubble(text, type, timeStr) {
-        const bubble = document.createElement('div');
-        bubble.className = `msg-bubble msg-${type}`;
-        bubble.innerHTML = `${text}<div class="msg-time">${timeStr}</div>`;
-        chatMessagesBox.appendChild(bubble);
-        chatMessagesBox.scrollTop = chatMessagesBox.scrollHeight;
-    }
+    // Sync settings range display & preferences saving
+    mainDisplayPanel.addEventListener('input', (e) => {
+        if (e.target.id === 'radarDistanceRange') {
+            const valDisplay = document.getElementById('radarDistanceValue');
+            if (valDisplay) valDisplay.innerText = `${e.target.value} km`;
+        }
+    });
 
-    function sendMessage() {
-        const text = chatInputField.value.trim();
-        if(!text || !currentActiveChat) return;
+    mainDisplayPanel.addEventListener('click', async (e) => {
+        if (e.target.closest('#btnSaveAllSettings')) {
+            const vetChecked = document.getElementById('notifVet')?.checked ?? true;
+            const matchChecked = document.getElementById('notifMatch')?.checked ?? true;
+            const appChecked = document.getElementById('notifAdoption')?.checked ?? true;
+            const incognitoChecked = document.getElementById('prefIncognito')?.checked ?? false;
+            const radarVal = document.getElementById('radarDistanceRange')?.value || '25';
 
-        const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        appendMessageBubble(text, 'sent', "Sending..."); // Optimistic UI update
-        chatInputField.value = '';
-        
-        // Target the last added bubble to update its timestamp once confirmed
-        const lastBubbleTime = chatMessagesBox.lastElementChild.querySelector('.msg-time');
-
-        Promise.resolve().then(() => {
-            if (!CHATS_STORE[currentActiveChat]) CHATS_STORE[currentActiveChat] = [];
-            CHATS_STORE[currentActiveChat].push({ text: text, type: 'sent', time: timeStr });
-            return { status: 'success', time: timeStr };
-        })
-        .then(data => {
-            if(data.status === 'success') {
-                if (lastBubbleTime) lastBubbleTime.innerText = data.time;
-            } else {
-                showCustomPopup("Message Failed", data.message, true);
-                if (chatMessagesBox.lastElementChild) chatMessagesBox.lastElementChild.remove();
+            try {
+                await account.updatePrefs({
+                    ...CURRENT_USER_PREFS,
+                    notifVet: vetChecked,
+                    notifMatch: matchChecked,
+                    notifAdoption: appChecked,
+                    incognito: incognitoChecked,
+                    radarDistance: radarVal
+                });
+                CURRENT_USER_PREFS.radarDistance = radarVal;
+                CURRENT_USER_PREFS.incognito = incognitoChecked;
+                await addActivityLog('Updated notification & discovery preferences', '', 'fa-sliders');
+                showCustomPopup("Settings Saved", "Your notification, privacy, and discovery preferences have been updated successfully!");
+            } catch (err) {
+                showCustomPopup("Error", err.message, true);
             }
-        });
-    }
-
-    btnSendMsg.addEventListener('click', sendMessage);
-    chatInputField.addEventListener('keypress', (e) => { if(e.key === 'Enter') sendMessage(); });
+        }
+    });
 
 }); 
