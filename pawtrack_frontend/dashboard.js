@@ -2616,69 +2616,100 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         // --- 5. ACTIVITY LOGS (DIRECT FROM APPWRITE DATABASE - ZERO LOCALSTORAGE) ---
-        const logContainer = document.getElementById('recentActivityLogs');
-        if (logContainer) {
-            logContainer.innerHTML = '<div class="activity-loading"><i class="fa-solid fa-circle-notch fa-spin"></i> Loading activity logs...</div>';
-            try {
-                const logsRes = await databases.listDocuments(DB_ID, COLL_LOGS, [
-                    Query.equal('user_id', CURRENT_USER_ID),
-                    Query.orderDesc('$createdAt'),
-                    Query.limit(20)
-                ]);
-                logContainer.innerHTML = '';
-                const logs = logsRes.documents;
-                if (logs.length > 0) {
-                    logs.forEach(log => {
-                        const ts = parseInt(log.timestamp) || new Date(log.$createdAt).getTime();
-                        const friendlyTime = formatFriendlyTime(ts);
-                        const theme = getActivityTheme(log.action, log.icon);
-                        const safeTarget = log.target ? escapeHtml(log.target) : '';
-                        const safeAction = escapeHtml(log.action || 'Activity recorded');
+        await loadRecentActivityLogs();
 
-                        logContainer.innerHTML += `
-                            <div class="activity-item">
-                                <div class="activity-icon-bubble ${theme.themeClass}">
-                                    <i class="fa-solid ${theme.icon}"></i>
+        const refreshBtn = document.getElementById('btnRefreshActivityLogs');
+        if (refreshBtn) {
+            refreshBtn.onclick = async () => {
+                refreshBtn.classList.add('spinning');
+                refreshBtn.disabled = true;
+                await loadRecentActivityLogs();
+                setTimeout(() => {
+                    refreshBtn.classList.remove('spinning');
+                    refreshBtn.disabled = false;
+                }, 450);
+            };
+        }
+    }
+
+    async function loadRecentActivityLogs() {
+        const logContainer = document.getElementById('recentActivityLogs');
+        if (!logContainer) return;
+
+        logContainer.innerHTML = '<div class="activity-loading"><i class="fa-solid fa-circle-notch fa-spin"></i> Loading activity logs...</div>';
+        try {
+            const logsRes = await databases.listDocuments(DB_ID, COLL_LOGS, [
+                Query.equal('user_id', CURRENT_USER_ID),
+                Query.orderDesc('$createdAt'),
+                Query.limit(20)
+            ]);
+            logContainer.innerHTML = '';
+            const logs = logsRes.documents;
+            if (logs && logs.length > 0) {
+                logs.forEach(log => {
+                    const ts = parseLogTimestamp(log.timestamp, log.$createdAt);
+                    const friendlyTime = formatFriendlyTime(ts);
+                    const theme = getActivityTheme(log.action, log.icon);
+                    const safeTarget = log.target ? escapeHtml(log.target) : '';
+                    const safeAction = escapeHtml(log.action || 'Activity recorded');
+
+                    logContainer.innerHTML += `
+                        <div class="activity-item">
+                            <div class="activity-icon-bubble ${theme.themeClass}">
+                                <i class="fa-solid ${theme.icon}"></i>
+                            </div>
+                            <div class="activity-details">
+                                <div class="activity-row-main">
+                                    <span class="activity-action-text">${safeAction}</span>
+                                    <span class="activity-category-pill ${theme.tagClass}">${theme.tagLabel}</span>
                                 </div>
-                                <div class="activity-details">
-                                    <div class="activity-row-main">
-                                        <span class="activity-action-text">${safeAction}</span>
-                                        <span class="activity-category-pill ${theme.tagClass}">${theme.tagLabel}</span>
+                                ${safeTarget ? `
+                                    <div class="activity-target-pill" title="${safeTarget}">
+                                        <i class="fa-solid fa-quote-left"></i>
+                                        <span>${safeTarget}</span>
                                     </div>
-                                    ${safeTarget ? `
-                                        <div class="activity-target-pill">
-                                            <i class="fa-solid fa-quote-left"></i>
-                                            <span>${safeTarget}</span>
-                                        </div>
-                                    ` : ''}
-                                    <div class="activity-meta">
-                                        <span class="activity-timestamp"><i class="fa-regular fa-clock"></i> ${friendlyTime}</span>
-                                        <span class="activity-verified-tag"><i class="fa-solid fa-circle-check"></i> Recorded</span>
-                                    </div>
+                                ` : ''}
+                                <div class="activity-meta">
+                                    <span class="activity-timestamp"><i class="fa-regular fa-clock"></i> ${friendlyTime}</span>
+                                    <span class="activity-verified-tag"><i class="fa-solid fa-circle-check"></i> Recorded</span>
                                 </div>
                             </div>
-                        `;
-                    });
-                } else {
-                    logContainer.innerHTML = `
-                        <div class="activity-empty-state">
-                            <div class="empty-icon-circle"><i class="fa-solid fa-shield-halved"></i></div>
-                            <h4>Security & Account Verified</h4>
-                            <p>Your session is active. Actions like pet registrations, adoptions, and profile updates will appear here in real time.</p>
                         </div>
                     `;
-                }
-            } catch (err) {
-                console.warn("Could not load activity logs:", err);
+                });
+            } else {
                 logContainer.innerHTML = `
                     <div class="activity-empty-state">
-                        <div class="empty-icon-circle"><i class="fa-solid fa-circle-info"></i></div>
-                        <h4>No Activity Recorded</h4>
-                        <p>No past logs found for your account yet.</p>
+                        <div class="empty-icon-circle"><i class="fa-solid fa-shield-halved"></i></div>
+                        <h4>Security & Account Verified</h4>
+                        <p>Your session is active. Actions like pet registrations, adoptions, and profile updates will appear here in real time.</p>
                     </div>
                 `;
             }
+        } catch (err) {
+            console.warn("Could not load activity logs:", err);
+            logContainer.innerHTML = `
+                <div class="activity-empty-state">
+                    <div class="empty-icon-circle"><i class="fa-solid fa-circle-info"></i></div>
+                    <h4>No Activity Recorded</h4>
+                    <p>No past logs found for your account yet.</p>
+                </div>
+            `;
         }
+    }
+
+    function parseLogTimestamp(timestampVal, createdAtVal) {
+        if (timestampVal) {
+            const num = typeof timestampVal === 'number' ? timestampVal : parseInt(timestampVal, 10);
+            if (!isNaN(num) && num > 0) return num;
+        }
+        if (createdAtVal) {
+            const parsed = Date.parse(createdAtVal);
+            if (!isNaN(parsed) && parsed > 0) return parsed;
+            const d = new Date(createdAtVal).getTime();
+            if (!isNaN(d) && d > 0) return d;
+        }
+        return Date.now();
     }
 
     function escapeHtml(str) {
@@ -2744,6 +2775,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     function formatFriendlyTime(ts) {
+        if (!ts || isNaN(ts)) return 'Recently';
         const now = Date.now();
         const diff = Math.max(0, now - ts);
         const minute = 60 * 1000;
@@ -2751,6 +2783,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         const day = 24 * hour;
 
         const dateObj = new Date(ts);
+        if (isNaN(dateObj.getTime())) return 'Recently';
+
         const timeStr = dateObj.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
 
         if (diff < 2 * minute) {

@@ -127,9 +127,9 @@
         </div>
 
         <div class="profile-tab-content active" id="tab-overview">
-            <div style="display: grid; grid-template-columns: 1fr 1.6fr; gap: 25px; align-items: start;">
+            <div class="profile-overview-grid">
                 
-                <div class="profile-stats-grid" style="display: flex; flex-direction: column; gap: 20px;">
+                <div class="profile-stats-grid">
                     <div class="home-stat-card"><div class="stat-icon paw-bg"><i class="fa-solid fa-paw"></i></div><div><h3>Owned Pets</h3><h2 id="countOwnedPets">0</h2></div></div>
                     <div class="home-stat-card"><div class="stat-icon heart-bg"><i class="fa-solid fa-heart"></i></div><div><h3>Successful Adoptions</h3><h2 id="countSuccessfulApps">0</h2></div></div>
                 </div>
@@ -140,17 +140,22 @@
                             <div class="activity-header-icon">
                                 <i class="fa-solid fa-clock-rotate-left"></i>
                             </div>
-                            <div>
+                            <div class="activity-header-text">
                                 <h3 class="activity-header-title">Recent Activity & Logs</h3>
                                 <p class="activity-header-subtitle">Real-time account security and pet logs</p>
                             </div>
                         </div>
-                        <div class="activity-header-status">
-                            <span class="live-dot"></span>
-                            <span>Live 24h</span>
+                        <div class="activity-header-actions">
+                            <button class="activity-refresh-btn" id="btnRefreshActivityLogs" title="Refresh Activity Logs" aria-label="Refresh Activity Logs">
+                                <i class="fa-solid fa-rotate-right"></i>
+                            </button>
+                            <div class="activity-header-status">
+                                <span class="live-dot"></span>
+                                <span>Live 24h</span>
+                            </div>
                         </div>
                     </div>
-                    <div class="activity-list" id="recentActivityLogs">
+                    <div class="activity-list" id="recentActivityLogs" role="feed" aria-label="Recent activity logs">
                     </div>
                 </div>
 
