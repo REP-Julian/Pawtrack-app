@@ -3310,25 +3310,31 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (modal) modal.style.display = 'none';
     }
 
-    // First-time tour disabled — replaced by AI Assistant (under development)
     function checkFirstTimeUserTour() {
-        // Tour has been replaced by AI Assistant. No-op.
+        try {
+            const completed = localStorage.getItem('pawtrack_tour_completed');
+            if (!completed) {
+                setTimeout(() => {
+                    const welcomeModal = document.getElementById('tourWelcomeModal');
+                    const welcomeHeading = document.getElementById('welcomeTourHeading');
+                    if (welcomeHeading && CURRENT_USER) {
+                        welcomeHeading.innerText = `Welcome, ${CURRENT_USER}! 👋`;
+                    }
+                    if (welcomeModal) welcomeModal.style.display = 'flex';
+                }, 1400);
+            }
+        } catch (e) {}
     }
 
-    // Attach AI Assistant listeners (under development)
-    const btnAiAssistant = document.getElementById('btnAiAssistant');
-    if (btnAiAssistant) {
-        btnAiAssistant.addEventListener('click', () => {
-            showRealtimeToast(
-                "AI Assistant 🤖",
-                "This feature is still under development. Stay tuned for our AI-powered assistant!",
-                "fa-robot",
-                null,
-                "info"
-            );
+    // Attach Tour listener (header button)
+    const btnStartTour = document.getElementById('btnStartTour');
+    if (btnStartTour) {
+        btnStartTour.addEventListener('click', () => {
+            startInteractiveTour(0);
         });
     }
 
+    // Attach AI Assistant listener (sidebar — under development)
     const btnSidebarAiAssistant = document.getElementById('btnSidebarAiAssistant');
     if (btnSidebarAiAssistant) {
         btnSidebarAiAssistant.addEventListener('click', () => {
