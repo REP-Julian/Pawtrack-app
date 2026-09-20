@@ -3385,6 +3385,24 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
+    const hiwModal = document.getElementById('howItWorksModal');
+    if (hiwModal) {
+        hiwModal.addEventListener('click', (e) => {
+            if (e.target === hiwModal) {
+                closeHowItWorksGuide();
+            }
+        });
+    }
+
+    const welcomeModalEl = document.getElementById('tourWelcomeModal');
+    if (welcomeModalEl) {
+        welcomeModalEl.addEventListener('click', (e) => {
+            if (e.target === welcomeModalEl) {
+                welcomeModalEl.style.display = 'none';
+            }
+        });
+    }
+
     // HIW Guide Modal Tabs
     document.querySelectorAll('.hiw-tab-btn').forEach(btn => {
         btn.addEventListener('click', function() {
