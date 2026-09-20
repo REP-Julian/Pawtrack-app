@@ -1,5 +1,5 @@
 import { account, databases } from './appwrite.js';
-import { ID } from 'appwrite';
+import { ID, Query } from 'appwrite';
 
 document.addEventListener('DOMContentLoaded', () => {
     
@@ -118,16 +118,30 @@ document.addEventListener('DOMContentLoaded', () => {
                         username: username,
                         avatarUrl: '/resources/avatar/Avatar 1.jpg'
                     });
+
+                    // Store username->email mapping for login lookup
+                    try {
+                        const currentUser = await account.get();
+                        await databases.createDocument('pawtrack_db', 'user_profiles', currentUser.$id, {
+                            username: username,
+                            email: email,
+                            user_id: currentUser.$id
+                        });
+                        localStorage.setItem('pawtrack_user_' + username.toLowerCase(), email);
+                    } catch(profileErr) {
+                        console.warn("Could not save user profile mapping:", profileErr);
+                    }
                 } catch(sessionErr) {
                     console.warn("Could not set initial session prefs:", sessionErr);
                 }
 
                 // Persist activity log directly into Appwrite activity_logs collection
                 try {
+                    const currentUser = await account.get().catch(() => null);
                     await databases.createDocument('pawtrack_db', 'activity_logs', ID.unique(), {
-                        user_id: email,
+                        user_id: currentUser ? currentUser.$id : email,
                         action: "Account successfully created",
-                        target: "Welcome to PawTrack!",
+                        target: `@${username}`,
                         icon: "fa-user-plus",
                         timestamp: Date.now().toString()
                     });
@@ -145,40 +159,76 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // 4. LOGIN: Form Submission (Appwrite SDK)
+    // 4. LOGIN: Form Submission (Username or Email via Appwrite)
     const loginForm = document.getElementById('loginForm');
     if (loginForm) {
         loginForm.removeAttribute('action');
-        // change label from USERNAME to EMAIL
-        const label = loginForm.querySelector('label');
-        if(label && label.innerText.includes('USERNAME')) {
-            label.innerText = 'EMAIL:';
-            const usernameInput = document.getElementById('username');
-            if (usernameInput) {
-                usernameInput.setAttribute('type', 'email');
-                usernameInput.setAttribute('placeholder', 'Enter your email');
-            }
+        const usernameInput = document.getElementById('username');
+        if (usernameInput) {
+            usernameInput.setAttribute('type', 'text');
+            usernameInput.setAttribute('placeholder', 'Enter your username');
         }
 
         loginForm.addEventListener('submit', async (e) => {
             e.preventDefault(); 
             
-            const emailVal = document.getElementById('username').value.trim();
+            const usernameVal = document.getElementById('username').value.trim();
             const passwordVal = document.getElementById('password').value;
 
+            if (!usernameVal || !passwordVal) {
+                showFloatingPopup("Error", "Username and Password are required!", true);
+                return;
+            }
+
             try {
-                // Login user using Appwrite Auth
+                let loginEmail = usernameVal;
+                
+                // If it doesn't contain '@', look up email by username in user_profiles
+                if (!usernameVal.includes('@')) {
+                    let found = false;
+                    try {
+                        const results = await databases.listDocuments('pawtrack_db', 'user_profiles', [
+                            Query.equal('username', usernameVal)
+                        ]);
+                        if (results.documents.length > 0) {
+                            loginEmail = results.documents[0].email;
+                            found = true;
+                        }
+                    } catch (lookupErr) {
+                        console.warn("Username lookup failed in user_profiles:", lookupErr);
+                    }
+
+                    // Fallback to local cache if offline or network glitch
+                    if (!found) {
+                        const cachedEmail = localStorage.getItem('pawtrack_user_' + usernameVal.toLowerCase());
+                        if (cachedEmail) {
+                            loginEmail = cachedEmail;
+                            found = true;
+                        }
+                    }
+
+                    if (!found) {
+                        showFloatingPopup("Access Denied", "Username not found. Please check and try again.", true);
+                        return;
+                    }
+                }
+
+                // Login user using Appwrite Auth with resolved email
                 await account.createEmailPasswordSession(
-                    emailVal, 
+                    loginEmail, 
                     passwordVal
                 );
+
+                // Cache for fast subsequent logins on this browser
+                localStorage.setItem('pawtrack_user_' + usernameVal.toLowerCase(), loginEmail);
 
                 // Persist login activity log directly to Appwrite
                 try {
                     const currentUser = await account.get();
+                    const displayName = currentUser.prefs?.username || usernameVal;
                     await databases.createDocument('pawtrack_db', 'activity_logs', ID.unique(), {
                         user_id: currentUser.$id,
-                        action: "Logged into account",
+                        action: `Logged in as @${displayName}`,
                         target: "Authentication successful",
                         icon: "fa-right-to-bracket",
                         timestamp: Date.now().toString()
@@ -190,7 +240,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 window.location.href = '/Dashboard.html';
             } catch (error) {
                 console.error('Appwrite Login Error:', error);
-                showFloatingPopup("Access Denied", error.message || "Invalid email or password!", true);
+                showFloatingPopup("Access Denied", error.message || "Invalid username or password!", true);
             }
         });
     }

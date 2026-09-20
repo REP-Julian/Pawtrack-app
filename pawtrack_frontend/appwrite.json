@@ -11,267 +11,433 @@
     "collections": [
         {
             "$id": "pets",
+            "$permissions": [
+                "read(\"any\")",
+                "create(\"any\")",
+                "update(\"any\")",
+                "delete(\"any\")"
+            ],
             "databaseId": "pawtrack_db",
             "name": "pets",
             "enabled": true,
-            "documentSecurity": true,
+            "documentSecurity": false,
             "attributes": [
                 {
                     "key": "name",
                     "type": "string",
-                    "status": "available",
                     "required": true,
                     "array": false,
-                    "size": 255
+                    "size": 255,
+                    "default": null,
+                    "encrypt": false
                 },
                 {
                     "key": "breed",
                     "type": "string",
-                    "status": "available",
                     "required": true,
                     "array": false,
-                    "size": 255
+                    "size": 255,
+                    "default": null,
+                    "encrypt": false
                 },
                 {
                     "key": "gender",
                     "type": "string",
-                    "status": "available",
                     "required": true,
                     "array": false,
-                    "size": 50
+                    "size": 50,
+                    "default": null,
+                    "encrypt": false
                 },
                 {
                     "key": "age",
                     "type": "string",
-                    "status": "available",
                     "required": false,
                     "array": false,
-                    "size": 50
+                    "size": 50,
+                    "default": null,
+                    "encrypt": false
                 },
                 {
                     "key": "status",
                     "type": "string",
-                    "status": "available",
                     "required": true,
                     "array": false,
-                    "size": 50
+                    "size": 50,
+                    "default": null,
+                    "encrypt": false
                 },
                 {
                     "key": "health_status",
                     "type": "string",
-                    "status": "available",
                     "required": false,
                     "array": false,
-                    "size": 255
+                    "size": 255,
+                    "default": null,
+                    "encrypt": false
                 },
                 {
                     "key": "owner",
                     "type": "string",
-                    "status": "available",
                     "required": true,
                     "array": false,
-                    "size": 255
+                    "size": 255,
+                    "default": null,
+                    "encrypt": false
                 },
                 {
                     "key": "contact_number",
                     "type": "string",
-                    "status": "available",
                     "required": false,
                     "array": false,
-                    "size": 100
+                    "size": 100,
+                    "default": null,
+                    "encrypt": false
                 },
                 {
                     "key": "personal_traits",
                     "type": "string",
-                    "status": "available",
                     "required": false,
                     "array": false,
-                    "size": 1000
+                    "size": 1000,
+                    "default": null,
+                    "encrypt": false
                 },
                 {
                     "key": "reason_for_adoption",
                     "type": "string",
-                    "status": "available",
                     "required": false,
                     "array": false,
-                    "size": 1000
+                    "size": 1000,
+                    "default": null,
+                    "encrypt": false
                 },
                 {
                     "key": "img",
                     "type": "string",
-                    "status": "available",
                     "required": false,
                     "array": false,
-                    "size": 1000
+                    "size": 1000,
+                    "default": null,
+                    "encrypt": false
                 }
             ],
             "indexes": []
         },
         {
             "$id": "applications",
+            "$permissions": [
+                "read(\"any\")",
+                "create(\"any\")",
+                "update(\"any\")",
+                "delete(\"any\")"
+            ],
             "databaseId": "pawtrack_db",
             "name": "applications",
             "enabled": true,
-            "documentSecurity": true,
+            "documentSecurity": false,
             "attributes": [
                 {
                     "key": "pet_name",
                     "type": "string",
-                    "status": "available",
                     "required": true,
                     "array": false,
-                    "size": 255
+                    "size": 255,
+                    "default": null,
+                    "encrypt": false
                 },
                 {
                     "key": "date",
                     "type": "string",
-                    "status": "available",
                     "required": true,
                     "array": false,
-                    "size": 100
+                    "size": 100,
+                    "default": null,
+                    "encrypt": false
                 },
                 {
                     "key": "status",
                     "type": "string",
-                    "status": "available",
                     "required": true,
                     "array": false,
-                    "size": 50
+                    "size": 50,
+                    "default": null,
+                    "encrypt": false
                 },
                 {
                     "key": "user_id",
                     "type": "string",
-                    "status": "available",
                     "required": true,
                     "array": false,
-                    "size": 255
+                    "size": 255,
+                    "default": null,
+                    "encrypt": false
                 },
                 {
                     "key": "img",
                     "type": "string",
-                    "status": "available",
                     "required": false,
                     "array": false,
-                    "size": 1000
+                    "size": 1000,
+                    "default": null,
+                    "encrypt": false
                 }
             ],
             "indexes": []
         },
         {
             "$id": "vet_appointments",
+            "$permissions": [
+                "read(\"any\")",
+                "create(\"any\")",
+                "update(\"any\")",
+                "delete(\"any\")"
+            ],
             "databaseId": "pawtrack_db",
             "name": "vet_appointments",
             "enabled": true,
-            "documentSecurity": true,
+            "documentSecurity": false,
             "attributes": [
                 {
                     "key": "pet_name",
                     "type": "string",
-                    "status": "available",
                     "required": true,
                     "array": false,
-                    "size": 255
+                    "size": 255,
+                    "default": null,
+                    "encrypt": false
                 },
                 {
                     "key": "vet_name",
                     "type": "string",
-                    "status": "available",
                     "required": true,
                     "array": false,
-                    "size": 255
+                    "size": 255,
+                    "default": null,
+                    "encrypt": false
                 },
                 {
                     "key": "status",
                     "type": "string",
-                    "status": "available",
                     "required": true,
                     "array": false,
-                    "size": 50
+                    "size": 50,
+                    "default": null,
+                    "encrypt": false
                 },
                 {
                     "key": "time",
                     "type": "string",
-                    "status": "available",
                     "required": false,
                     "array": false,
-                    "size": 100
+                    "size": 100,
+                    "default": null,
+                    "encrypt": false
                 },
                 {
                     "key": "date",
                     "type": "string",
-                    "status": "available",
                     "required": false,
                     "array": false,
-                    "size": 100
+                    "size": 100,
+                    "default": null,
+                    "encrypt": false
                 },
                 {
                     "key": "user_id",
                     "type": "string",
-                    "status": "available",
                     "required": true,
                     "array": false,
-                    "size": 255
+                    "size": 255,
+                    "default": null,
+                    "encrypt": false
                 },
                 {
                     "key": "img",
                     "type": "string",
-                    "status": "available",
                     "required": false,
                     "array": false,
-                    "size": 1000
+                    "size": 1000,
+                    "default": null,
+                    "encrypt": false
                 }
             ],
             "indexes": []
         },
         {
             "$id": "recycle_bin",
+            "$permissions": [
+                "read(\"any\")",
+                "create(\"any\")",
+                "update(\"any\")",
+                "delete(\"any\")"
+            ],
             "databaseId": "pawtrack_db",
             "name": "recycle_bin",
             "enabled": true,
-            "documentSecurity": true,
+            "documentSecurity": false,
             "attributes": [
                 {
                     "key": "name",
                     "type": "string",
-                    "status": "available",
                     "required": true,
                     "array": false,
-                    "size": 255
+                    "size": 255,
+                    "default": null,
+                    "encrypt": false
                 },
                 {
                     "key": "breed",
                     "type": "string",
-                    "status": "available",
                     "required": true,
                     "array": false,
-                    "size": 255
+                    "size": 255,
+                    "default": null,
+                    "encrypt": false
                 },
                 {
                     "key": "gender",
                     "type": "string",
-                    "status": "available",
                     "required": true,
                     "array": false,
-                    "size": 50
+                    "size": 50,
+                    "default": null,
+                    "encrypt": false
                 },
                 {
                     "key": "owner",
                     "type": "string",
-                    "status": "available",
                     "required": true,
                     "array": false,
-                    "size": 255
+                    "size": 255,
+                    "default": null,
+                    "encrypt": false
                 },
                 {
                     "key": "img",
                     "type": "string",
-                    "status": "available",
                     "required": false,
                     "array": false,
-                    "size": 1000
+                    "size": 1000,
+                    "default": null,
+                    "encrypt": false
                 }
             ],
             "indexes": []
+        },
+        {
+            "$id": "activity_logs",
+            "$permissions": [
+                "read(\"any\")",
+                "create(\"any\")",
+                "update(\"any\")",
+                "delete(\"any\")"
+            ],
+            "databaseId": "pawtrack_db",
+            "name": "activity_logs",
+            "enabled": true,
+            "documentSecurity": false,
+            "attributes": [
+                {
+                    "key": "user_id",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 255,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "action",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 255,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "target",
+                    "type": "string",
+                    "required": false,
+                    "array": false,
+                    "size": 255,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "icon",
+                    "type": "string",
+                    "required": false,
+                    "array": false,
+                    "size": 100,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "timestamp",
+                    "type": "string",
+                    "required": false,
+                    "array": false,
+                    "size": 100,
+                    "default": null,
+                    "encrypt": false
+                }
+            ],
+            "indexes": []
+        },
+        {
+            "$id": "user_profiles",
+            "$permissions": [
+                "read(\"any\")",
+                "create(\"any\")",
+                "update(\"any\")",
+                "delete(\"any\")"
+            ],
+            "databaseId": "pawtrack_db",
+            "name": "User Profiles",
+            "enabled": true,
+            "documentSecurity": false,
+            "attributes": [
+                {
+                    "key": "username",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 128,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "email",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 256,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "user_id",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 128,
+                    "default": null,
+                    "encrypt": false
+                }
+            ],
+            "indexes": [
+                {
+                    "key": "username_index",
+                    "type": "key",
+                    "status": "available",
+                    "attributes": [
+                        "username"
+                    ],
+                    "orders": []
+                }
+            ]
         }
     ],
     "buckets": [
