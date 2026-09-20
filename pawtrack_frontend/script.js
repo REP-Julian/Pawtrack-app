@@ -113,17 +113,29 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            // Check if username is already taken in user_profiles
+            // Check if user is existing user (by email or username) in user_profiles
             try {
+                const existingEmailDoc = await databases.listDocuments('pawtrack_db', 'user_profiles', [
+                    Query.equal('email', email)
+                ]);
+                if (existingEmailDoc.documents.length > 0) {
+                    showFloatingPopup("Existing User", "An account with this email address already exists. Please log in instead.", true, () => {
+                        window.location.href = '/PawTrackLogin.html';
+                    });
+                    return;
+                }
+
                 const existingUserDoc = await databases.listDocuments('pawtrack_db', 'user_profiles', [
                     Query.equal('username', username.toLowerCase())
                 ]);
                 if (existingUserDoc.documents.length > 0) {
-                    showFloatingPopup("Registration Error", "This username is already taken. Please choose another username.", true);
+                    showFloatingPopup("Account Exists", "This username is already taken. If this is your account, please log in.", true, () => {
+                        window.location.href = '/PawTrackLogin.html';
+                    });
                     return;
                 }
             } catch (chkErr) {
-                console.warn("Username availability check warning:", chkErr);
+                console.warn("User existence pre-check warning:", chkErr);
             }
 
             try {
@@ -163,7 +175,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 // Cache in localStorage for immediate offline/fast resolution
                 localStorage.setItem('pawtrack_user_' + username.toLowerCase(), email);
+                localStorage.setItem('pawtrack_is_new_user_' + newUser.$id, 'true');
                 sessionStorage.setItem('pawtrack_registered_username', username);
+                sessionStorage.setItem('pawtrack_just_registered_user', newUser.$id);
+                sessionStorage.setItem('pawtrack_is_new_registration', 'true');
 
                 // Temporary session to update user preferences & save initial activity log
                 try {
@@ -175,7 +190,10 @@ document.addEventListener('DOMContentLoaded', () => {
                         firstName: firstName,
                         lastName: lastName,
                         middleName: middleName,
-                        avatarUrl: '/resources/avatar/Avatar 1.jpg'
+                        avatarUrl: '/resources/avatar/Avatar 1.jpg',
+                        is_new_user: true,
+                        tour_completed: false,
+                        registered_at: Date.now().toString()
                     });
 
                     try {
@@ -202,7 +220,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             } catch (error) {
                 console.error('Appwrite Register Error:', error);
-                showFloatingPopup("Registration Failed", error.message, true);
+                if (error.code === 409 || error.type === 'user_already_exists' || (error.message && error.message.toLowerCase().includes('already exists'))) {
+                    showFloatingPopup("Existing User", "An account with this email already exists. Please log in instead.", true, () => {
+                        window.location.href = '/PawTrackLogin.html';
+                    });
+                } else {
+                    showFloatingPopup("Registration Failed", error.message, true);
+                }
             }
         });
     }

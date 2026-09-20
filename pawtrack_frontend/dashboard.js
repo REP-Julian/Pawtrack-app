@@ -3272,6 +3272,30 @@ document.addEventListener('DOMContentLoaded', async () => {
         renderTourStep(startIndex);
     }
 
+    async function markTourCompletedForUser() {
+        if (!CURRENT_USER_ID) return;
+        try {
+            // Mark tour completed in local storage keyed to this specific user
+            localStorage.setItem('pawtrack_tour_completed_' + CURRENT_USER_ID, 'true');
+            localStorage.removeItem('pawtrack_is_new_user_' + CURRENT_USER_ID);
+            sessionStorage.removeItem('pawtrack_just_registered_user');
+            sessionStorage.removeItem('pawtrack_is_new_registration');
+
+            // Update in-memory user preferences
+            CURRENT_USER_PREFS.tour_completed = true;
+            CURRENT_USER_PREFS.is_new_user = false;
+
+            // Persist to Appwrite Cloud so it will never show up again across devices or future logins
+            await account.updatePrefs({
+                ...CURRENT_USER_PREFS,
+                tour_completed: true,
+                is_new_user: false
+            });
+        } catch (err) {
+            console.warn("Could not persist tour completion to Appwrite:", err);
+        }
+    }
+
     function endTour(markCompleted = true) {
         const overlay = document.getElementById('pawtrackTourOverlay');
         if (overlay) overlay.style.display = 'none';
@@ -3279,9 +3303,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         setHighlightedTarget(null);
 
         if (markCompleted) {
-            try {
-                localStorage.setItem('pawtrack_tour_completed', 'true');
-            } catch (e) {}
+            markTourCompletedForUser();
         }
     }
 
@@ -3318,18 +3340,40 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     function checkFirstTimeUserTour() {
         try {
-            const completed = localStorage.getItem('pawtrack_tour_completed');
-            if (!completed) {
+            if (!CURRENT_USER_ID) return;
+
+            // Check if user is a NEW user (created recently)
+            const isNewUser = CURRENT_USER_PREFS.is_new_user === true ||
+                              localStorage.getItem('pawtrack_is_new_user_' + CURRENT_USER_ID) === 'true' ||
+                              sessionStorage.getItem('pawtrack_just_registered_user') === CURRENT_USER_ID ||
+                              sessionStorage.getItem('pawtrack_is_new_registration') === 'true';
+
+            // Check if user has already completed/seen the tour
+            const isTourCompleted = CURRENT_USER_PREFS.tour_completed === true ||
+                                    localStorage.getItem('pawtrack_tour_completed_' + CURRENT_USER_ID) === 'true';
+
+            // ONLY show the tour once if the user is a NEW user and has NOT completed/seen it
+            if (isNewUser && !isTourCompleted) {
                 setTimeout(() => {
                     const welcomeModal = document.getElementById('tourWelcomeModal');
                     const welcomeHeading = document.getElementById('welcomeTourHeading');
-                    if (welcomeHeading && CURRENT_USER) {
-                        welcomeHeading.innerText = `Welcome, ${CURRENT_USER}! 👋`;
+                    const displayName = CURRENT_USER_PREFS.username || CURRENT_USER;
+                    if (welcomeHeading && displayName) {
+                        welcomeHeading.innerText = `Welcome, ${displayName}! 👋`;
                     }
                     if (welcomeModal) welcomeModal.style.display = 'flex';
-                }, 1400);
+
+                    // Mark as shown so when he/she logs in again it will NOT show up
+                    markTourCompletedForUser();
+                }, 1200);
+            } else {
+                // For old users or users who already completed the tour, ensure welcome modal is closed
+                const welcomeModal = document.getElementById('tourWelcomeModal');
+                if (welcomeModal) welcomeModal.style.display = 'none';
             }
-        } catch (e) {}
+        } catch (e) {
+            console.warn("First-time tour check warning:", e);
+        }
     }
 
     // Attach Tour listener (header button)
@@ -3357,6 +3401,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const btnWelcomeTourStart = document.getElementById('btnWelcomeTourStart');
     if (btnWelcomeTourStart) {
         btnWelcomeTourStart.addEventListener('click', () => {
+            markTourCompletedForUser();
             startInteractiveTour(0);
         });
     }
@@ -3366,9 +3411,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         btnWelcomeTourSkip.addEventListener('click', () => {
             const welcomeModal = document.getElementById('tourWelcomeModal');
             if (welcomeModal) welcomeModal.style.display = 'none';
-            try {
-                localStorage.setItem('pawtrack_tour_completed', 'true');
-            } catch (e) {}
+            markTourCompletedForUser();
         });
     }
 
@@ -3412,6 +3455,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         welcomeModalEl.addEventListener('click', (e) => {
             if (e.target === welcomeModalEl) {
                 welcomeModalEl.style.display = 'none';
+                markTourCompletedForUser();
             }
         });
     }
