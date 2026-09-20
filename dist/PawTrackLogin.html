@@ -12,7 +12,7 @@
     <title>Paw Track Login</title>
     <link rel="stylesheet" href="/style.css">
   <script type="module" crossorigin src="/assets/appwrite-BTLpE_3q.js"></script>
-  <script type="module" crossorigin src="/assets/script-AJET-P5y.js"></script>
+  <script type="module" crossorigin src="/assets/script-SmLvOWqc.js"></script>
 </head>
 <body>
 <div class="overlay-container">
@@ -26,13 +26,13 @@
 
         <form id="loginForm">
             <div class="input-field">
-                <label>USERNAME:</label>
-                <input type="text" id="username" required>
+                <label for="username">USERNAME OR EMAIL:</label>
+                <input type="text" id="username" placeholder="Enter username or email" required autocomplete="username">
             </div>
             <div class="input-field">
-                <label>PASSWORD:</label>
+                <label for="password">PASSWORD:</label>
                 <div class="password-input-container">
-                    <input type="password" id="password" placeholder="Enter your password" required>
+                    <input type="password" id="password" placeholder="Enter your password" required autocomplete="current-password">
                     <span id="togglePass" class="eye-icon">👁️</span>
                 </div>
             </div>

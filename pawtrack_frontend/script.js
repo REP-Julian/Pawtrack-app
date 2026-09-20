@@ -81,36 +81,91 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const inputs = signupForm.querySelectorAll('input:not([type="checkbox"])');
             const passwordFields = signupForm.querySelectorAll('.pass-field');
-            
-            if (passwordFields.length >= 2 && passwordFields[0].value !== passwordFields[1].value) {
+
+            // Robust field retrieval using IDs with querySelector fallback
+            const lastName = (document.getElementById('signupLastName')?.value || inputs[0]?.value || '').trim();
+            const firstName = (document.getElementById('signupFirstName')?.value || inputs[1]?.value || '').trim();
+            const middleName = (document.getElementById('signupMiddleName')?.value || inputs[2]?.value || '').trim();
+            const contact = (document.getElementById('signupContact')?.value || inputs[3]?.value || '').trim();
+            const email = (document.getElementById('signupEmail')?.value || inputs[4]?.value || '').trim().toLowerCase();
+            const username = (document.getElementById('signupUsername')?.value || inputs[5]?.value || '').trim();
+            const password = document.getElementById('signupPassword')?.value || passwordFields[0]?.value || '';
+            const repeatPassword = document.getElementById('signupRepeatPassword')?.value || passwordFields[1]?.value || '';
+            const fullName = `${firstName} ${lastName}`.trim();
+
+            if (!email || !password || !username) {
+                showFloatingPopup("Error", "Username, Email, and Password are required!", true);
+                return;
+            }
+
+            if (password !== repeatPassword) {
                 showFloatingPopup("Error", "Passwords do not match!", true);
                 return;
             }
 
-            const lastName = inputs[0]?.value || '';
-            const firstName = inputs[1]?.value || '';
-            const middleName = inputs[2]?.value || '';
-            const contact = inputs[3]?.value || '';
-            const email = inputs[4]?.value || '';
-            const username = inputs[5]?.value || '';
-            const password = passwordFields[0].value;
-            const fullName = `${firstName} ${lastName}`.trim();
-
-            if (!email || !password) {
-                showFloatingPopup("Error", "Email and Password are required!", true);
+            if (password.length < 8) {
+                showFloatingPopup("Error", "Password must be at least 8 characters long!", true);
                 return;
             }
 
+            if (username.includes('@')) {
+                showFloatingPopup("Error", "Username cannot contain '@'.", true);
+                return;
+            }
+
+            // Check if username is already taken in user_profiles
             try {
+                const existingUserDoc = await databases.listDocuments('pawtrack_db', 'user_profiles', [
+                    Query.equal('username', username.toLowerCase())
+                ]);
+                if (existingUserDoc.documents.length > 0) {
+                    showFloatingPopup("Registration Error", "This username is already taken. Please choose another username.", true);
+                    return;
+                }
+            } catch (chkErr) {
+                console.warn("Username availability check warning:", chkErr);
+            }
+
+            try {
+                // Clear any lingering session before creating account to prevent conflicts
+                try {
+                    await account.deleteSession('current');
+                } catch (_) {}
+
                 // Register user using Appwrite Auth (storing username as primary Auth Name)
-                await account.create(
+                const newUser = await account.create(
                     ID.unique(),
                     email,
                     password,
                     username || fullName
                 );
 
-                // Create initial session to update preferences
+                // CRITICAL: Immediately record username->email mapping in user_profiles collection
+                try {
+                    await databases.createDocument('pawtrack_db', 'user_profiles', newUser.$id, {
+                        username: username.toLowerCase(),
+                        email: email,
+                        user_id: newUser.$id
+                    });
+                } catch(profileErr) {
+                    console.warn("Could not save user profile document:", profileErr);
+                    // Fallback to random ID if newUser.$id document collision happens
+                    try {
+                        await databases.createDocument('pawtrack_db', 'user_profiles', ID.unique(), {
+                            username: username.toLowerCase(),
+                            email: email,
+                            user_id: newUser.$id
+                        });
+                    } catch (retryErr) {
+                        console.error("Failed retry user profile creation:", retryErr);
+                    }
+                }
+
+                // Cache in localStorage for immediate offline/fast resolution
+                localStorage.setItem('pawtrack_user_' + username.toLowerCase(), email);
+                sessionStorage.setItem('pawtrack_registered_username', username);
+
+                // Temporary session to update user preferences & save initial activity log
                 try {
                     await account.createEmailPasswordSession(email, password);
                     await account.updatePrefs({
@@ -123,37 +178,26 @@ document.addEventListener('DOMContentLoaded', () => {
                         avatarUrl: '/resources/avatar/Avatar 1.jpg'
                     });
 
-                    // Store username->email mapping for login lookup
                     try {
-                        const currentUser = await account.get();
-                        await databases.createDocument('pawtrack_db', 'user_profiles', currentUser.$id, {
-                            username: username,
-                            email: email,
-                            user_id: currentUser.$id
+                        await databases.createDocument('pawtrack_db', 'activity_logs', ID.unique(), {
+                            user_id: newUser.$id,
+                            action: "Account successfully created",
+                            target: `@${username}`,
+                            icon: "fa-user-plus",
+                            timestamp: Date.now().toString()
                         });
-                        localStorage.setItem('pawtrack_user_' + username.toLowerCase(), email);
-                    } catch(profileErr) {
-                        console.warn("Could not save user profile mapping:", profileErr);
+                    } catch(logErr) {
+                        console.warn("Could not save initial activity log to Appwrite:", logErr);
                     }
+
+                    // Log out of temporary session so the login page has no session conflicts
+                    await account.deleteSession('current');
                 } catch(sessionErr) {
-                    console.warn("Could not set initial session prefs:", sessionErr);
+                    console.warn("Preference update warning:", sessionErr);
+                    try { await account.deleteSession('current'); } catch (_) {}
                 }
 
-                // Persist activity log directly into Appwrite activity_logs collection
-                try {
-                    const currentUser = await account.get().catch(() => null);
-                    await databases.createDocument('pawtrack_db', 'activity_logs', ID.unique(), {
-                        user_id: currentUser ? currentUser.$id : email,
-                        action: "Account successfully created",
-                        target: `@${username}`,
-                        icon: "fa-user-plus",
-                        timestamp: Date.now().toString()
-                    });
-                } catch(logErr) {
-                    console.warn("Could not save initial activity log to Appwrite:", logErr);
-                }
-
-                showFloatingPopup("Welcome!", "Account created successfully! You will now be redirected to login.", false, () => {
+                showFloatingPopup("Welcome!", "Account created successfully! Redirecting to login...", false, () => {
                     window.location.href = '/PawTrackLogin.html'; 
                 });
             } catch (error) {
@@ -170,7 +214,16 @@ document.addEventListener('DOMContentLoaded', () => {
         const usernameInput = document.getElementById('username');
         if (usernameInput) {
             usernameInput.setAttribute('type', 'text');
-            usernameInput.setAttribute('placeholder', 'Enter your username');
+            usernameInput.setAttribute('placeholder', 'Enter your username or email');
+
+            // Auto-fill username if redirected from registration
+            const registeredUser = sessionStorage.getItem('pawtrack_registered_username');
+            if (registeredUser) {
+                usernameInput.value = registeredUser;
+                sessionStorage.removeItem('pawtrack_registered_username');
+                const passInput = document.getElementById('password');
+                if (passInput) passInput.focus();
+            }
         }
 
         loginForm.addEventListener('submit', async (e) => {
@@ -190,19 +243,36 @@ document.addEventListener('DOMContentLoaded', () => {
                 // If it doesn't contain '@', look up email by username in user_profiles
                 if (!usernameVal.includes('@')) {
                     let found = false;
+
+                    // 1. Query with lowercase username
                     try {
                         const results = await databases.listDocuments('pawtrack_db', 'user_profiles', [
-                            Query.equal('username', usernameVal)
+                            Query.equal('username', usernameVal.toLowerCase())
                         ]);
                         if (results.documents.length > 0) {
                             loginEmail = results.documents[0].email;
                             found = true;
                         }
                     } catch (lookupErr) {
-                        console.warn("Username lookup failed in user_profiles:", lookupErr);
+                        console.warn("Lowercase username lookup failed in user_profiles:", lookupErr);
                     }
 
-                    // Fallback to local cache if offline or network glitch
+                    // 2. Query with exact username (fallback for legacy records)
+                    if (!found) {
+                        try {
+                            const exactResults = await databases.listDocuments('pawtrack_db', 'user_profiles', [
+                                Query.equal('username', usernameVal)
+                            ]);
+                            if (exactResults.documents.length > 0) {
+                                loginEmail = exactResults.documents[0].email;
+                                found = true;
+                            }
+                        } catch (exactErr) {
+                            console.warn("Exact username lookup fallback failed:", exactErr);
+                        }
+                    }
+
+                    // 3. Fallback to local cache
                     if (!found) {
                         const cachedEmail = localStorage.getItem('pawtrack_user_' + usernameVal.toLowerCase());
                         if (cachedEmail) {
@@ -212,24 +282,44 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
 
                     if (!found) {
-                        showFloatingPopup("Access Denied", "Username not found. Please check and try again.", true);
+                        showFloatingPopup("Access Denied", "Username not found. Please check your username or login with your email address.", true);
                         return;
                     }
                 }
 
+                // CRITICAL: Ensure no lingering active session prevents login
+                try {
+                    await account.deleteSession('current');
+                } catch (_) {}
+
                 // Login user using Appwrite Auth with resolved email
                 await account.createEmailPasswordSession(
-                    loginEmail, 
+                    loginEmail.trim().toLowerCase(), 
                     passwordVal
                 );
 
                 // Cache for fast subsequent logins on this browser
-                localStorage.setItem('pawtrack_user_' + usernameVal.toLowerCase(), loginEmail);
+                localStorage.setItem('pawtrack_user_' + usernameVal.toLowerCase(), loginEmail.trim().toLowerCase());
 
-                // Persist login activity log directly to Appwrite
+                // Auto-heal: Ensure user_profiles has a record for this user if missing
                 try {
                     const currentUser = await account.get();
-                    const displayName = currentUser.prefs?.username || usernameVal;
+                    const profileCheck = await databases.listDocuments('pawtrack_db', 'user_profiles', [
+                        Query.equal('user_id', currentUser.$id)
+                    ]);
+                    if (profileCheck.total === 0) {
+                        const profileUsername = (currentUser.prefs?.username || currentUser.name || usernameVal.replace(/@.*/, '')).trim();
+                        if (profileUsername) {
+                            await databases.createDocument('pawtrack_db', 'user_profiles', currentUser.$id, {
+                                username: profileUsername.toLowerCase(),
+                                email: currentUser.email.toLowerCase(),
+                                user_id: currentUser.$id
+                            });
+                            localStorage.setItem('pawtrack_user_' + profileUsername.toLowerCase(), currentUser.email.toLowerCase());
+                        }
+                    }
+
+                    const displayName = currentUser.prefs?.username || currentUser.name || usernameVal;
                     await databases.createDocument('pawtrack_db', 'activity_logs', ID.unique(), {
                         user_id: currentUser.$id,
                         action: `Logged in as @${displayName}`,
@@ -238,7 +328,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         timestamp: Date.now().toString()
                     });
                 } catch (logErr) {
-                    console.warn("Could not write login log to Appwrite:", logErr);
+                    console.warn("Post-login activity/heal warning:", logErr);
                 }
 
                 window.location.href = '/Dashboard.html';

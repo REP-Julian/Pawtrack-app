@@ -27,36 +27,36 @@
 
         <form id="signupForm" class="signup-grid">
             <div class="form-group">
-                <label>Last Name:</label>
-                <input type="text" placeholder="Enter last name" required>
+                <label for="signupLastName">Last Name:</label>
+                <input type="text" id="signupLastName" placeholder="Enter last name" required autocomplete="family-name">
             </div>
             <div class="form-group">
-                <label>First Name:</label>
-                <input type="text" placeholder="Enter first name" required>
+                <label for="signupFirstName">First Name:</label>
+                <input type="text" id="signupFirstName" placeholder="Enter first name" required autocomplete="given-name">
             </div>
             <div class="form-group">
-                <label>Middle Name:</label>
-                <input type="text" placeholder="Enter middle name">
+                <label for="signupMiddleName">Middle Name:</label>
+                <input type="text" id="signupMiddleName" placeholder="Enter middle name" autocomplete="additional-name">
             </div>
             <div class="form-group">
-                <label>Contact Number:</label>
-                <input type="tel" placeholder="e.g. 09123456789" required>
+                <label for="signupContact">Contact Number:</label>
+                <input type="tel" id="signupContact" placeholder="e.g. 09123456789" required autocomplete="tel">
             </div>
             <div class="form-group full-width">
-                <label>Email Address:</label>
-                <input type="email" placeholder="you@example.com" required>
+                <label for="signupEmail">Email Address:</label>
+                <input type="email" id="signupEmail" placeholder="you@example.com" required autocomplete="email">
             </div>
             <div class="form-group full-width">
-                <label>Username:</label>
-                <input type="text" placeholder="Choose a username" required>
+                <label for="signupUsername">Username:</label>
+                <input type="text" id="signupUsername" placeholder="Choose a username (e.g. johnsmith)" required autocomplete="username">
             </div>
             <div class="form-group">
-                <label>Password:</label>
-                <input type="password" class="pass-field" placeholder="Create a password" required>
+                <label for="signupPassword">Password:</label>
+                <input type="password" id="signupPassword" class="pass-field" placeholder="At least 8 characters" required minlength="8" autocomplete="new-password">
             </div>
             <div class="form-group">
-                <label>Repeat Password:</label>
-                <input type="password" class="pass-field" placeholder="Confirm password" required>
+                <label for="signupRepeatPassword">Repeat Password:</label>
+                <input type="password" id="signupRepeatPassword" class="pass-field" placeholder="Confirm password" required minlength="8" autocomplete="new-password">
             </div>
 
             <div class="full-width">
