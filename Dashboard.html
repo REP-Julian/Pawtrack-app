@@ -22,7 +22,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Outfit:wght@500;600;700;800;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/dashboard-style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <script type="module" crossorigin src="/assets/dashboard-BKpclLTW.js"></script>
+  <script type="module" crossorigin src="/assets/dashboard-e6x1KQxt.js"></script>
   <link rel="modulepreload" crossorigin href="/assets/appwrite-CRWyoAJa.js">
 </head>
 <body>
@@ -45,10 +45,6 @@
         <button class="nav-btn" data-target="vet" data-tooltip="Vet Appointments" title="Vet Appointments"><i class="fa-solid fa-user-doctor"></i> <span class="nav-label">Vet Appointments</span></button>
         <button class="nav-btn" data-target="shop" data-tooltip="Pet Shop" title="Pet Shop"><i class="fa-solid fa-store"></i> <span class="nav-label">Pet Shop</span></button>
         <button class="nav-btn" data-target="breeding" data-tooltip="Match Maker" title="Match Maker"><i class="fa-solid fa-heart"></i> <span class="nav-label">Match Maker</span></button>
-        <button class="nav-btn" data-target="messages" id="navMessagesBtn" data-tooltip="Messages" title="Messages">
-            <i class="fa-solid fa-comment-dots"></i> <span class="nav-label">Messages</span>
-            <span class="sidebar-badge" id="chatGlobalBadge" style="display:none;">0</span>
-        </button>
     </nav>
 
    <div class="sidebar-footer">
@@ -599,6 +595,54 @@
             <button class="btn-hiw-dismiss" id="btnHiwDismiss">Got It, Let's Explore</button>
         </div>
     </div>
+</div>
+
+<!-- Floating Messenger Chat Bubble & Widget -->
+<div class="floating-chat-widget" id="floatingChatWidget">
+    <!-- Floating Chat Window / Flyout -->
+    <div class="floating-chat-window" id="floatingChatWindow" aria-hidden="true">
+        <div class="chat-window-header">
+            <div class="chat-window-header-info">
+                <button type="button" class="btn-chat-back" id="btnFloatingChatBack" title="Back to conversations" style="display: none;" aria-label="Back">
+                    <i class="fa-solid fa-chevron-left"></i>
+                </button>
+                <div class="chat-window-avatar" id="floatingChatHeaderAvatar">
+                    <i class="fa-solid fa-comments"></i>
+                </div>
+                <div class="chat-window-titles">
+                    <h4 id="floatingChatHeaderTitle">PawTrack Messenger</h4>
+                    <span class="chat-window-status" id="floatingChatHeaderStatus">
+                        <span class="status-dot-green"></span> Online &amp; Active
+                    </span>
+                </div>
+            </div>
+            <div class="chat-window-actions">
+                <button type="button" class="btn-chat-win-action" id="btnFloatingChatNew" title="New Conversation" aria-label="New Conversation">
+                    <i class="fa-solid fa-pen-to-square"></i>
+                </button>
+                <button type="button" class="btn-chat-win-action" id="btnFloatingChatExpand" title="Expand Fullscreen" aria-label="Expand Fullscreen">
+                    <i class="fa-solid fa-up-right-and-down-left-from-center"></i>
+                </button>
+                <button type="button" class="btn-chat-win-action" id="btnFloatingChatClose" title="Minimize Messenger" aria-label="Close">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Chat Window Body Container -->
+        <div class="chat-window-body" id="floatingChatBody">
+            <!-- Dynamically populated via JS -->
+        </div>
+    </div>
+
+    <!-- Floating Chat Bubble Trigger -->
+    <button class="floating-chat-bubble" id="floatingChatBubble" title="Messages &amp; Community Chat" aria-label="Open Messages">
+        <div class="bubble-icon-wrap">
+            <i class="fa-solid fa-comment-dots icon-bubble-chat"></i>
+            <i class="fa-solid fa-xmark icon-bubble-close"></i>
+        </div>
+        <span class="floating-chat-badge" id="chatGlobalBadge" style="display: none;">0</span>
+    </button>
 </div>
 
 </body>

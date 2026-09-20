@@ -3090,19 +3090,291 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    // Connect to "Message Owner" in Match Maker
+    // ---------------------------------------------------------
+    // 💬 FLOATING CHAT BUBBLE & COMPACT MESSENGER WIDGET
+    // ---------------------------------------------------------
+    function initFloatingChatWidget() {
+        const widget = document.getElementById('floatingChatWidget');
+        const bubble = document.getElementById('floatingChatBubble');
+        const windowEl = document.getElementById('floatingChatWindow');
+        const bodyEl = document.getElementById('floatingChatBody');
+        const backBtn = document.getElementById('btnFloatingChatBack');
+        const newBtn = document.getElementById('btnFloatingChatNew');
+        const expandBtn = document.getElementById('btnFloatingChatExpand');
+        const closeBtn = document.getElementById('btnFloatingChatClose');
+        const headerTitle = document.getElementById('floatingChatHeaderTitle');
+        const headerStatus = document.getElementById('floatingChatHeaderStatus');
+        const headerAvatar = document.getElementById('floatingChatHeaderAvatar');
+        const globalBadge = document.getElementById('chatGlobalBadge');
+
+        if (!widget || !bubble || !windowEl || !bodyEl) return;
+
+        let isWidgetOpen = false;
+
+        function updateGlobalBadge(count = 0) {
+            if (!globalBadge) return;
+            if (count > 0) {
+                globalBadge.innerText = count > 99 ? '99+' : count;
+                globalBadge.style.display = 'flex';
+            } else {
+                globalBadge.innerText = '0';
+                globalBadge.style.display = 'none';
+            }
+        }
+
+        function toggleFloatingWidget(forceOpen = null) {
+            isWidgetOpen = forceOpen !== null ? forceOpen : !isWidgetOpen;
+            if (isWidgetOpen) {
+                widget.classList.add('open');
+                windowEl.setAttribute('aria-hidden', 'false');
+                updateGlobalBadge(0);
+                if (currentActiveChat) {
+                    renderFloatingActiveChat(currentActiveChat);
+                } else {
+                    renderFloatingInbox();
+                }
+            } else {
+                widget.classList.remove('open');
+                windowEl.setAttribute('aria-hidden', 'true');
+            }
+        }
+
+        function renderFloatingInbox(filter = '') {
+            if (backBtn) backBtn.style.display = 'none';
+            if (headerTitle) headerTitle.innerText = 'PawTrack Messenger';
+            if (headerStatus) headerStatus.innerHTML = '<span class="status-dot-green"></span> Online & Active';
+            if (headerAvatar) headerAvatar.innerHTML = '<i class="fa-solid fa-comments"></i>';
+
+            bodyEl.innerHTML = `
+                <div class="floating-inbox-wrapper">
+                    <div class="floating-inbox-search">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                        <input type="text" id="floatingInboxSearchInput" placeholder="Search conversations..." value="${escapeHtml(filter)}">
+                    </div>
+                    <div class="floating-inbox-list" id="floatingInboxList"></div>
+                </div>
+            `;
+
+            const listEl = document.getElementById('floatingInboxList');
+            const searchInput = document.getElementById('floatingInboxSearchInput');
+
+            const contacts = Object.keys(CHATS_STORE).filter(u => u.toLowerCase().includes(filter.toLowerCase()));
+
+            if (contacts.length === 0) {
+                listEl.innerHTML = `
+                    <div class="inbox-empty-state">
+                        <i class="fa-solid fa-comments"></i>
+                        <p>No conversations found.<br>Click <i class="fa-solid fa-pen-to-square"></i> above to start chatting!</p>
+                    </div>
+                `;
+            } else {
+                contacts.forEach(username => {
+                    const msgs = CHATS_STORE[username] || [];
+                    const lastMsg = msgs.length > 0 ? msgs[msgs.length - 1].text : 'No messages yet';
+                    const lastTime = msgs.length > 0 ? msgs[msgs.length - 1].time : '';
+
+                    const item = document.createElement('div');
+                    item.className = 'inbox-item';
+                    item.innerHTML = `
+                        <div class="inbox-avatar">
+                            <i class="fa-solid fa-user"></i>
+                        </div>
+                        <div class="inbox-info">
+                            <div class="inbox-info-header">
+                                <h4>@${escapeHtml(username)}</h4>
+                                <span class="inbox-time">${lastTime}</span>
+                            </div>
+                            <p class="inbox-snippet">${escapeHtml(lastMsg)}</p>
+                        </div>
+                    `;
+                    item.onclick = () => renderFloatingActiveChat(username);
+                    listEl.appendChild(item);
+                });
+            }
+
+            if (searchInput) {
+                searchInput.oninput = (e) => {
+                    renderFloatingInbox(e.target.value.trim());
+                    const nextInput = document.getElementById('floatingInboxSearchInput');
+                    if (nextInput) {
+                        nextInput.focus();
+                        nextInput.selectionStart = nextInput.selectionEnd = nextInput.value.length;
+                    }
+                };
+            }
+        }
+
+        function renderFloatingActiveChat(username) {
+            currentActiveChat = username;
+            if (backBtn) backBtn.style.display = 'inline-flex';
+            if (headerTitle) headerTitle.innerText = `@${username}`;
+            if (headerStatus) headerStatus.innerHTML = '<span class="status-dot-green"></span> Active Conversation';
+            if (headerAvatar) headerAvatar.innerHTML = '<i class="fa-solid fa-user"></i>';
+
+            const msgs = CHATS_STORE[username] || [];
+
+            bodyEl.innerHTML = `
+                <div class="floating-chat-stream-wrapper">
+                    <div class="floating-chat-stream" id="floatingActiveStream">
+                        ${msgs.length === 0 ? '<div class="empty-stream"><p>This is the start of your message history with @' + escapeHtml(username) + '</p></div>' : ''}
+                    </div>
+                    <div class="floating-chat-input-bar">
+                        <input type="text" id="floatingChatInput" placeholder="Message @${escapeHtml(username)}...">
+                        <button class="btn-floating-chat-send" id="btnFloatingSend" title="Send Message" aria-label="Send Message">
+                            <i class="fa-solid fa-paper-plane"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            const stream = document.getElementById('floatingActiveStream');
+            msgs.forEach(m => {
+                const row = document.createElement('div');
+                row.className = `stream-bubble-row row-${m.type}`;
+                row.innerHTML = `
+                    <div class="stream-bubble bubble-${m.type}">
+                        <div class="bubble-text">${escapeHtml(m.text)}</div>
+                        <div class="bubble-time">${escapeHtml(m.time || '')}</div>
+                    </div>
+                `;
+                stream.appendChild(row);
+            });
+            stream.scrollTop = stream.scrollHeight;
+
+            const input = document.getElementById('floatingChatInput');
+            const sendBtn = document.getElementById('btnFloatingSend');
+
+            function handleSend() {
+                const text = input.value.trim();
+                if (!text || !currentActiveChat) return;
+
+                const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                
+                const row = document.createElement('div');
+                row.className = 'stream-bubble-row row-sent';
+                row.innerHTML = `
+                    <div class="stream-bubble bubble-sent">
+                        <div class="bubble-text">${escapeHtml(text)}</div>
+                        <div class="bubble-time">${escapeHtml(timeStr)}</div>
+                    </div>
+                `;
+                stream.appendChild(row);
+                input.value = '';
+                stream.scrollTop = stream.scrollHeight;
+
+                if (!CHATS_STORE[currentActiveChat]) CHATS_STORE[currentActiveChat] = [];
+                CHATS_STORE[currentActiveChat].push({ text, type: 'sent', time: timeStr });
+
+                if (currentActiveChat === 'PawTrackCommunity') {
+                    setTimeout(() => {
+                        const replyTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                        const replyText = "We're glad to have you! Feel free to connect with pet owners across PawTrack.";
+                        CHATS_STORE['PawTrackCommunity'].push({ text: replyText, type: 'received', time: replyTime });
+                        if (currentActiveChat === 'PawTrackCommunity' && document.getElementById('floatingActiveStream')) {
+                            const repRow = document.createElement('div');
+                            repRow.className = 'stream-bubble-row row-received';
+                            repRow.innerHTML = `
+                                <div class="stream-bubble bubble-received">
+                                    <div class="bubble-text">${escapeHtml(replyText)}</div>
+                                    <div class="bubble-time">${escapeHtml(replyTime)}</div>
+                                </div>
+                            `;
+                            const activeSt = document.getElementById('floatingActiveStream');
+                            if (activeSt) {
+                                activeSt.appendChild(repRow);
+                                activeSt.scrollTop = activeSt.scrollHeight;
+                            }
+                        }
+                    }, 800);
+                }
+            }
+
+            if (sendBtn) sendBtn.onclick = handleSend;
+            if (input) {
+                input.onkeypress = (e) => { if (e.key === 'Enter') handleSend(); };
+                setTimeout(() => input.focus(), 150);
+            }
+        }
+
+        bubble.onclick = (e) => {
+            e.stopPropagation();
+            toggleFloatingWidget();
+        };
+
+        if (closeBtn) {
+            closeBtn.onclick = (e) => {
+                e.stopPropagation();
+                toggleFloatingWidget(false);
+            };
+        }
+
+        if (backBtn) {
+            backBtn.onclick = (e) => {
+                e.stopPropagation();
+                currentActiveChat = null;
+                renderFloatingInbox();
+            };
+        }
+
+        if (newBtn) {
+            newBtn.onclick = (e) => {
+                e.stopPropagation();
+                showCustomPrompt("Start Conversation", "Enter the PawTrack username you'd like to message:", (targetUser) => {
+                    if (targetUser && targetUser.trim()) {
+                        const cleanUser = targetUser.trim().replace('@', '');
+                        if (!CHATS_STORE[cleanUser]) {
+                            CHATS_STORE[cleanUser] = [];
+                        }
+                        renderFloatingActiveChat(cleanUser);
+                    }
+                });
+            };
+        }
+
+        if (expandBtn) {
+            expandBtn.onclick = (e) => {
+                e.stopPropagation();
+                toggleFloatingWidget(false);
+                navButtons.forEach(b => b.classList.remove('active'));
+                mainDisplayPanel.scrollTo({ top: 0, behavior: 'smooth' });
+                mainDisplayPanel.innerHTML = renderMessagesPageHTML();
+                initMessengerPage(currentActiveChat);
+            };
+        }
+
+        // Close on outside click if clicked outside widget
+        document.addEventListener('click', (e) => {
+            if (isWidgetOpen && !widget.contains(e.target)) {
+                toggleFloatingWidget(false);
+            }
+        });
+
+        // Make floating chat opener available globally
+        window.pawtrackOpenFloatingChat = function(targetUser = null) {
+            toggleFloatingWidget(true);
+            if (targetUser) {
+                if (!CHATS_STORE[targetUser]) CHATS_STORE[targetUser] = [];
+                renderFloatingActiveChat(targetUser);
+            } else if (currentActiveChat) {
+                renderFloatingActiveChat(currentActiveChat);
+            } else {
+                renderFloatingInbox();
+            }
+        };
+    }
+
+    // Connect to "Message Owner" in Match Maker & Adoption Cards
     mainDisplayPanel.addEventListener('click', (e) => {
         const msgOwnerBtn = e.target.closest('.btn-message-owner');
         if (msgOwnerBtn) {
             const ownerUsername = msgOwnerBtn.getAttribute('data-owner');
-            const msgNavBtn = document.querySelector('.sidebar-nav .nav-btn[data-target="messages"]');
-            if (msgNavBtn) {
-                navButtons.forEach(b => b.classList.remove('active'));
-                msgNavBtn.classList.add('active');
+            if (window.pawtrackOpenFloatingChat) {
+                window.pawtrackOpenFloatingChat(ownerUsername);
+            } else {
+                mainDisplayPanel.scrollTo({ top: 0, behavior: 'smooth' });
+                mainDisplayPanel.innerHTML = renderMessagesPageHTML();
+                initMessengerPage(ownerUsername);
             }
-            mainDisplayPanel.scrollTo({ top: 0, behavior: 'smooth' });
-            mainDisplayPanel.innerHTML = renderMessagesPageHTML();
-            initMessengerPage(ownerUsername);
         }
     });
 
@@ -3187,11 +3459,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         },
         {
             title: "Real-Time Messages & Alerts 💬",
-            desc: "Chat directly with pet owners, caregivers, and adopters. Real-time notification toasts keep you updated the moment an application is approved or a new pet is posted!",
+            desc: "Chat directly with pet owners, caregivers, and adopters anytime via your floating messenger bubble! Real-time notification toasts keep you updated the moment an application is approved or a new pet is posted!",
             icon: "fa-comment-dots",
-            targetSelector: "#navMessagesBtn",
-            tab: "messages",
-            placement: "right"
+            targetSelector: "#floatingChatBubble",
+            tab: null,
+            placement: "left"
         }
     ];
 
@@ -3285,6 +3557,12 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
             if (cardTop + cardHeight > window.innerHeight - 20) {
                 cardTop = Math.max(20, rect.top - cardHeight - margin);
+            }
+        } else if (step.placement === 'left') {
+            cardLeft = Math.max(20, rect.left - cardWidth - margin);
+            cardTop = Math.max(20, rect.top + (rect.height / 2) - (cardHeight / 2));
+            if (cardTop + cardHeight > window.innerHeight - 20) {
+                cardTop = window.innerHeight - cardHeight - 20;
             }
         } else {
             cardTop = Math.max(20, (window.innerHeight / 2) - (cardHeight / 2));
@@ -3651,6 +3929,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     initSidebarToggle();
+    initFloatingChatWidget();
 
     // Check on startup
     checkFirstTimeUserTour();
