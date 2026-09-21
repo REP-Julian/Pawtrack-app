@@ -490,26 +490,26 @@ document.addEventListener('DOMContentLoaded', async () => {
                 ${getPageHeader("My Applications", "Track the journey of your adoption requests and welcome your new companion home.", "fa-solid fa-clipboard-list")}
                 
                 <!-- Adoption Journey Stepper Banner -->
-                <div style="background: linear-gradient(135deg, #FFFDF9 0%, #FBF7F0 100%); border: 1px solid rgba(224, 90, 71, 0.15); border-radius: 20px; padding: 24px 30px; margin-bottom: 28px; box-shadow: 0 4px 16px rgba(45,30,20,0.04);">
-                    <h4 style="font-family: var(--font-heading); font-size: 1.05rem; font-weight: 800; color: #1F2421; margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
-                        <i class="fa-solid fa-route" style="color: var(--primary);"></i> The Adoption Journey
+                <div class="adoption-journey-banner">
+                    <h4 class="journey-banner-title">
+                        <i class="fa-solid fa-route"></i> The Adoption Journey
                     </h4>
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px;">
-                        <div style="background: white; border: 1px solid rgba(45,49,46,0.08); border-radius: 14px; padding: 12px 14px; display: flex; align-items: center; gap: 10px;">
-                            <span style="width: 28px; height: 28px; border-radius: 50%; background: #FDF2F0; color: var(--primary); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.85rem;">1</span>
-                            <div><strong style="font-size: 0.85rem; display: block; color: #1F2421;">Submitted</strong><small style="color: #6B7280; font-size: 0.75rem;">Digital file sent</small></div>
+                    <div class="journey-steps-grid">
+                        <div class="journey-step-chip">
+                            <span class="journey-step-badge badge-terracotta">1</span>
+                            <div><strong class="journey-step-label">Submitted</strong><small class="journey-step-desc">Digital file sent</small></div>
                         </div>
-                        <div style="background: white; border: 1px solid rgba(45,49,46,0.08); border-radius: 14px; padding: 12px 14px; display: flex; align-items: center; gap: 10px;">
-                            <span style="width: 28px; height: 28px; border-radius: 50%; background: #FEF3C7; color: #D97706; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.85rem;">2</span>
-                            <div><strong style="font-size: 0.85rem; display: block; color: #1F2421;">Under Review</strong><small style="color: #6B7280; font-size: 0.75rem;">Caregiver review</small></div>
+                        <div class="journey-step-chip">
+                            <span class="journey-step-badge badge-amber">2</span>
+                            <div><strong class="journey-step-label">Under Review</strong><small class="journey-step-desc">Caregiver review</small></div>
                         </div>
-                        <div style="background: white; border: 1px solid rgba(45,49,46,0.08); border-radius: 14px; padding: 12px 14px; display: flex; align-items: center; gap: 10px;">
-                            <span style="width: 28px; height: 28px; border-radius: 50%; background: #E0F2FE; color: #0284C7; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.85rem;">3</span>
-                            <div><strong style="font-size: 0.85rem; display: block; color: #1F2421;">Home Check</strong><small style="color: #6B7280; font-size: 0.75rem;">Safety verification</small></div>
+                        <div class="journey-step-chip">
+                            <span class="journey-step-badge badge-sky">3</span>
+                            <div><strong class="journey-step-label">Home Check</strong><small class="journey-step-desc">Safety verification</small></div>
                         </div>
-                        <div style="background: white; border: 1px solid rgba(45,49,46,0.08); border-radius: 14px; padding: 12px 14px; display: flex; align-items: center; gap: 10px;">
-                            <span style="width: 28px; height: 28px; border-radius: 50%; background: #D1FAE5; color: #065F46; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.85rem;">4</span>
-                            <div><strong style="font-size: 0.85rem; display: block; color: #1F2421;">Approved</strong><small style="color: #6B7280; font-size: 0.75rem;">Welcome home! 🐾</small></div>
+                        <div class="journey-step-chip">
+                            <span class="journey-step-badge badge-emerald">4</span>
+                            <div><strong class="journey-step-label">Approved</strong><small class="journey-step-desc">Welcome home! 🐾</small></div>
                         </div>
                     </div>
                 </div>

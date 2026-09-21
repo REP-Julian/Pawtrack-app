@@ -1651,6 +1651,93 @@ body {
 }
 
 /* --- 8. MY APPLICATIONS (TRACKER & TIMELINE) --- */
+
+/* Adoption Journey Stepper Banner */
+.adoption-journey-banner {
+    background: linear-gradient(135deg, #FFFDF9 0%, #FBF7F0 100%);
+    border: 1px solid rgba(224, 90, 71, 0.15);
+    border-radius: 20px;
+    padding: 24px 30px;
+    margin-bottom: 28px;
+    box-shadow: 0 4px 16px rgba(45, 30, 20, 0.04);
+}
+
+.journey-banner-title {
+    font-family: var(--font-heading);
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: var(--text-main);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.journey-banner-title i {
+    color: var(--primary);
+}
+
+.journey-steps-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 14px;
+}
+
+.journey-step-chip {
+    background: var(--surface-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: 14px;
+    padding: 12px 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: background 0.25s ease, border-color 0.25s ease;
+}
+
+.journey-step-badge {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 0.85rem;
+    flex-shrink: 0;
+}
+
+.journey-step-badge.badge-terracotta { background: var(--primary-light); color: var(--primary); }
+.journey-step-badge.badge-amber { background: var(--honey-light); color: var(--honey); }
+.journey-step-badge.badge-sky { background: var(--sky-light, #E0F2FE); color: var(--sky, #0284C7); }
+.journey-step-badge.badge-emerald { background: var(--emerald-light); color: var(--emerald, #065F46); }
+
+.journey-step-label {
+    font-size: 0.85rem;
+    display: block;
+    color: var(--text-main);
+    font-weight: 700;
+}
+
+.journey-step-desc {
+    color: var(--text-muted);
+    font-size: 0.75rem;
+}
+
+/* Dark Mode: Adoption Journey */
+[data-theme="dark"] .adoption-journey-banner {
+    background: linear-gradient(135deg, var(--surface-card) 0%, var(--bg-subtle) 100%);
+    border-color: var(--border-medium);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+}
+
+[data-theme="dark"] .journey-step-chip {
+    background: var(--bg-warm-tint);
+    border-color: var(--border-medium);
+}
+
+[data-theme="dark"] .journey-step-badge.badge-emerald {
+    color: #34D399;
+}
 .applications-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
