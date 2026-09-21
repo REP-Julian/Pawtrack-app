@@ -276,12 +276,12 @@ body {
 .sidebar {
     width: 220px;
     height: 100vh;
-    background: #18221E;
-    background: linear-gradient(180deg, #1C2722 0%, #151E1A 100%);
-    color: #E2E8E4;
+    background: #0B0F19;
+    background: linear-gradient(180deg, #111827 0%, #0B0F19 100%);
+    color: #E2E8F0;
     display: flex;
     flex-direction: column;
-    box-shadow: 4px 0 24px rgba(21, 30, 26, 0.12);
+    box-shadow: 4px 0 24px rgba(11, 15, 25, 0.35);
     z-index: 20;
     flex-shrink: 0;
     border-right: 1px solid rgba(255, 255, 255, 0.06);
@@ -296,7 +296,7 @@ body {
     width: 22px;
     height: 22px;
     border-radius: 50%;
-    background: #1C2722;
+    background: #111827;
     border: 1.5px solid rgba(255, 255, 255, 0.2);
     color: #CBD5E1;
     display: flex;
@@ -559,7 +559,7 @@ body {
     left: calc(100% + 14px);
     top: 50%;
     transform: translateY(-50%);
-    background: #18221E;
+    background: #0F172A;
     color: #F8FAFC;
     font-family: var(--font-body);
     font-size: 0.82rem;
@@ -583,7 +583,7 @@ body {
     top: 50%;
     transform: translateY(-50%);
     border: 5px solid transparent;
-    border-right-color: #18221E;
+    border-right-color: #0F172A;
     opacity: 0;
     visibility: hidden;
     transition: opacity 0.2s ease;
@@ -972,14 +972,15 @@ body {
 
 /* Welcome Banner */
 .home-banner {
-    background: linear-gradient(135deg, #23342D 0%, #1A2722 100%);
+    background: linear-gradient(135deg, #1E3A5F 0%, #0F1E36 100%);
+    border: 1px solid rgba(56, 189, 248, 0.16);
     border-radius: var(--radius-lg);
     padding: 14px 22px;
     color: white;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    box-shadow: var(--shadow-sm);
+    box-shadow: 0 4px 20px rgba(15, 30, 54, 0.25);
     position: relative;
     overflow: hidden;
 }
@@ -990,7 +991,7 @@ body {
     right: 50px;
     bottom: -25px;
     font-size: 90px;
-    opacity: 0.06;
+    opacity: 0.07;
     pointer-events: none;
     transform: rotate(15deg);
 }
@@ -1005,9 +1006,15 @@ body {
 }
 
 .banner-text p {
-    color: #CBD5CE;
+    color: #CBD5E1;
     font-size: 0.85rem;
     font-weight: 500;
+}
+
+[data-theme="dark"] .home-banner {
+    background: linear-gradient(135deg, #172A45 0%, #0B1626 100%);
+    border: 1px solid rgba(56, 189, 248, 0.2);
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
 }
 
 .banner-icon {
